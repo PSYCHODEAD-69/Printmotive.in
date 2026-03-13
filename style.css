@@ -462,7 +462,12 @@ section { padding: 5.5rem 2.5rem; }
   transition: all 0.28s cubic-bezier(0.16,1,0.3,1);
 }
 .pcta:hover { background: var(--accent); }
-
+@media (hover: none) {
+  .pcta {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+  }
+}
 /* ============================================================
    HOW IT WORKS
    ============================================================ */
