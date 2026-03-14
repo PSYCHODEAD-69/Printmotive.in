@@ -204,7 +204,7 @@ nav.scrolled {
    ============================================================ */
 .float-wa {
   position: fixed; bottom: 1.8rem; right: 1.8rem;
-  width: 60px; height: 60px;
+  width: 50px; height: 50px;
   background: var(--wa); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 6px 28px rgba(37,211,102,0.42);
@@ -213,7 +213,7 @@ nav.scrolled {
 }
 .float-wa:hover { animation-play-state: paused; transform: scale(1.12); }
 .float-wa-ring {
-  position: absolute; width: 100%; height: 100%;
+  position: absolute; width: 75%; height: 75%;
   border-radius: 50%; border: 2px solid var(--wa);
   animation: waRing 2.2s ease-out infinite;
 }
