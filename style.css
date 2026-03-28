@@ -559,7 +559,7 @@ section { padding: 5.5rem 2.5rem; }
    ============================================================ */
 footer { background: var(--ink); color: #fff; padding: 5rem 2.5rem 2rem; }
 .footer-grid {
-  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem;
+  display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 3rem;
   padding-bottom: 3rem; border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .footer-logo-wrap {
