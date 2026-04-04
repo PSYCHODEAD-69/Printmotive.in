@@ -610,7 +610,9 @@ footer { background: var(--ink); color: #fff; padding: 5rem 2.5rem 2rem; }
   padding-top: 1.8rem; font-size: 0.72rem; color: rgba(255,255,255,0.22);
   flex-wrap: wrap; gap: 0.5rem;
 }
-
+.developer{text-decoration: none;
+font-size: 0.72rem; color: rgba(255,255,255,0.22);
+   }
 /* ============================================================
    TOAST
    ============================================================ */
