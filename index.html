@@ -132,17 +132,17 @@
       <button class="cat-card active" data-cat="all" onclick="filterCategory('all')">
         <div class="cat-img-wrap"><img src="https://m.media-amazon.com/images/I/61JxI4kbYsL.jpg" alt="All"/></div>
         <div class="cat-name">All</div>
-        <span class="cat-badge" id="badge-all">13</span>
+        <span class="cat-badge" id="badge-all">21</span>
       </button>
       <button class="cat-card" data-cat="mugs" onclick="filterCategory('mugs')">
         <div class="cat-img-wrap"><img src="https://m.media-amazon.com/images/I/61JxI4kbYsL.jpg" alt="Mugs"/></div>
         <div class="cat-name">Mugs</div>
-        <span class="cat-badge" id="badge-mugs">1</span>
+        <span class="cat-badge" id="badge-mugs">2</span>
       </button>
       <button class="cat-card" data-cat="tshirts" onclick="filterCategory('tshirts')">
         <div class="cat-img-wrap"><img src="https://m.media-amazon.com/images/I/31sYpnB4ZuL._AC_UY1100_FMwebp_.jpg" alt="T-Shirts"/></div>
         <div class="cat-name">T-Shirts</div>
-        <span class="cat-badge" id="badge-tshirts">1</span>
+        <span class="cat-badge" id="badge-tshirts">4</span>
       </button>
       <button class="cat-card" data-cat="caps" onclick="filterCategory('caps')">
         <div class="cat-img-wrap"><img src="https://m.media-amazon.com/images/I/51Morq6O7TL._AC_UY1100_FMwebp_.jpg" alt="Caps"/></div>
@@ -152,7 +152,7 @@
       <button class="cat-card" data-cat="homeDecor" onclick="filterCategory('homeDecor')">
         <div class="cat-img-wrap"><img src="https://creatoons.com/wp-content/uploads/2024/02/photo-cushion-cover-2.webp" alt="Home Decor"/></div>
         <div class="cat-name">Home Decor</div>
-        <span class="cat-badge" id="badge-homeDecor">4</span>
+        <span class="cat-badge" id="badge-homeDecor">6</span>
       </button>
       <button class="cat-card" data-cat="covers" onclick="filterCategory('covers')">
         <div class="cat-img-wrap"><img src="https://m.media-amazon.com/images/I/71CspETzWIL._AC_UF1000,1000_QL80_FMwebp_.jpg" alt="Phone Covers"/></div>
@@ -162,12 +162,13 @@
       <button class="cat-card" data-cat="accessories" onclick="filterCategory('accessories')">
         <div class="cat-img-wrap"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA_ZkOI6911IreNWMC2Pf32MmjYQJdm4r04KBTCig8Hiflk6UKOfQrYJxn&s=10" alt="Accessories"/></div>
         <div class="cat-name">Accessories</div>
-        <span class="cat-badge" id="badge-accessories">5</span>
+        <span class="cat-badge" id="badge-accessories">7</span>
       </button>
     </div>
 
     <div class="products-grid" id="productsGrid">
 
+      <!-- ── MUGS ── -->
       <div class="product-card fade-up" data-cat="mugs" data-product="Custom Ceramic Mug" data-price="Rs.249" data-desc="High-quality ceramic mug with your favorite photo or design.">
         <div class="pimg-wrap">
           <img src="https://m.media-amazon.com/images/I/61JxI4kbYsL.jpg" alt="Custom Mug" loading="lazy"/>
@@ -186,10 +187,46 @@
         </div>
       </div>
 
-      <div class="product-card fade-up" data-cat="tshirts" data-product="Polyester T-Shirt" data-price="Rs.369" data-desc="Lightweight and breathable polyester t-shirt with vibrant HD printing.">
+      <div class="product-card fade-up d1" data-cat="mugs" data-product="Magic Mug" data-price="Rs.399" data-desc="Color-changing magic mug — reveals your design when filled with hot liquid!">
         <div class="pimg-wrap">
-          <img src="https://m.media-amazon.com/images/I/31sYpnB4ZuL._AC_UY1100_FMwebp_.jpg" alt="Polyester T-Shirt" loading="lazy"/>
+          <img src="https://cms.cloudinary.vpsvc.com/image/upload/c_scale,dpr_1.0,f_auto,q_auto:good,w_700/India%20LOB/Photo%20Gifts/Custom%20-%20Magic%20Mugs/IN_Custom-Magic-Mugs_Overview" alt="Magic Mug" loading="lazy"/>
+          <div class="pbadge blue">NEW</div>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Magic Mug</div>
+          <div class="pdesc">Color-changing magic mug — reveals your design when filled with hot liquid!</div>
+          <div class="pfooter">
+            <div class="pprice">Rs.399</div>
+            <button class="pcta-cart" data-product="Magic Mug" data-price="Rs.399" data-desc="Color-changing magic mug — reveals your design when filled with hot liquid!" onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Magic Mug" data-price="Rs.399" data-desc="Color-changing magic mug — reveals your design when filled with hot liquid!" onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── T-SHIRTS ── -->
+      <div class="product-card fade-up" data-cat="tshirts" data-product="Cotton T-Shirt" data-price="Rs.399" data-desc="Premium 100% cotton t-shirt with your custom design or photo. Round neck, all sizes.">
+        <div class="pimg-wrap">
+          <img src="https://m.media-amazon.com/images/I/31sYpnB4ZuL._AC_UY1100_FMwebp_.jpg" alt="Cotton T-Shirt" loading="lazy"/>
           <div class="pbadge">BESTSELLER</div>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Cotton T-Shirt</div>
+          <div class="pdesc">Premium 100% cotton t-shirt with your custom design or photo. Round neck, all sizes.</div>
+          <div class="pfooter">
+            <div class="pprice">Rs.399</div>
+            <button class="pcta-cart" data-product="Cotton T-Shirt" data-price="Rs.399" data-desc="Premium 100% cotton t-shirt with your custom design or photo." onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Cotton T-Shirt" data-price="Rs.399" data-desc="Premium 100% cotton t-shirt with your custom design or photo." onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card fade-up d1" data-cat="tshirts" data-product="Polyester T-Shirt" data-price="Rs.369" data-desc="Lightweight and breathable polyester t-shirt with vibrant HD printing.">
+        <div class="pimg-wrap">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRsDYsNl5i7uV7XaPxmyBFkIZ0TnZY2kLEOmC6y7DpWEg&s=10" alt="Polyester T-Shirt" loading="lazy"/>
         </div>
         <div class="pinfo">
           <div class="pname">Polyester T-Shirt</div>
@@ -204,7 +241,44 @@
         </div>
       </div>
 
-      <div class="product-card fade-up" data-cat="caps" data-product="Custom Printed Cap" data-price="Rs.199" data-desc="Stylish caps with your custom logo or name printed on the front.">
+      <div class="product-card fade-up d2" data-cat="tshirts" data-product="Hoodie" data-price="Rs.699" data-desc="Warm fleece hoodie with your custom print or embroidery. Unisex, all sizes.">
+        <div class="pimg-wrap">
+          <img src="https://images-na.ssl-images-amazon.com/images/I/719Wgz6d0DL._AC_UL600_SR600,600_.jpg" alt="Hoodie" loading="lazy"/>
+          <div class="pbadge yellow">NEW</div>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Hoodie</div>
+          <div class="pdesc">Warm fleece hoodie with your custom print or embroidery. Unisex, all sizes.</div>
+          <div class="pfooter">
+            <div class="pprice">Rs.699</div>
+            <button class="pcta-cart" data-product="Hoodie" data-price="Rs.699" data-desc="Warm fleece hoodie with your custom print or embroidery." onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Hoodie" data-price="Rs.699" data-desc="Warm fleece hoodie with your custom print or embroidery." onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card fade-up d3" data-cat="tshirts" data-product="Sports Jersey" data-price="Rs.449" data-desc="Custom printed sports jersey — ideal for teams, events and tournaments.">
+        <div class="pimg-wrap">
+          <img src="https://www.nextprint.in/cdn/shop/products/202306021241468796.png?v=1685690002" alt="Sports Jersey" loading="lazy"/>
+          <div class="pbadge blue">NEW</div>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Sports Jersey</div>
+          <div class="pdesc">Custom printed sports jersey — ideal for teams, events and tournaments.</div>
+          <div class="pfooter">
+            <div class="pprice">Rs.449</div>
+            <button class="pcta-cart" data-product="Sports Jersey" data-price="Rs.449" data-desc="Custom printed sports jersey — ideal for teams, events and tournaments." onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Sports Jersey" data-price="Rs.449" data-desc="Custom printed sports jersey — ideal for teams, events and tournaments." onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CAPS ── -->
+      <div class="product-card fade-up" data-cat="caps" data-product="Custom Printed Cap" data-price="Rs.249" data-desc="Stylish caps with your custom logo or name printed on the front.">
         <div class="pimg-wrap">
           <img src="https://m.media-amazon.com/images/I/51Morq6O7TL._AC_UY1100_FMwebp_.jpg" alt="Custom Cap" loading="lazy"/>
         </div>
@@ -212,33 +286,106 @@
           <div class="pname">Custom Printed Cap</div>
           <div class="pdesc">Stylish caps with your custom logo or name printed on the front.</div>
           <div class="pfooter">
-            <div class="pprice">Rs.199</div>
-            <button class="pcta-cart" data-product="Custom Printed Cap" data-price="Rs.199" data-desc="Stylish caps with your custom logo or name printed on the front." onclick="addToCart(this)">
+            <div class="pprice">Rs.249</div>
+            <button class="pcta-cart" data-product="Custom Printed Cap" data-price="Rs.249" data-desc="Stylish caps with your custom logo or name printed on the front." onclick="addToCart(this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
             </button>
-            <button class="pcta" data-product="Custom Printed Cap" data-price="Rs.199" data-desc="Stylish caps with your custom logo or name printed on the front." onclick="orderProduct(this)">Order Now</button>
+            <button class="pcta" data-product="Custom Printed Cap" data-price="Rs.249" data-desc="Stylish caps with your custom logo or name printed on the front." onclick="orderProduct(this)">Order Now</button>
           </div>
         </div>
       </div>
 
-      <div class="product-card fade-up" data-cat="homeDecor" data-product="Custom Cushion Cover" data-price="Rs.319" data-desc="Soft and durable cushion covers to personalize your home decor.">
+      <!-- ── HOME DECOR ── -->
+      <div class="product-card fade-up" data-cat="homeDecor" data-product="Cushion Printing" data-price="Rs.349" data-desc="Soft and durable cushion covers to personalize your home decor.">
         <div class="pimg-wrap">
           <img src="https://creatoons.com/wp-content/uploads/2024/02/photo-cushion-cover-2.webp" alt="Cushion Cover" loading="lazy"/>
         </div>
         <div class="pinfo">
-          <div class="pname">Custom Cushion Cover</div>
+          <div class="pname">Cushion Printing</div>
           <div class="pdesc">Soft and durable cushion covers to personalize your home decor.</div>
           <div class="pfooter">
-            <div class="pprice">Rs.319</div>
-            <button class="pcta-cart" data-product="Custom Cushion Cover" data-price="Rs.319" data-desc="Soft and durable cushion covers to personalize your home decor." onclick="addToCart(this)">
+            <div class="pprice">Rs.349</div>
+            <button class="pcta-cart" data-product="Cushion Printing" data-price="Rs.349" data-desc="Soft and durable cushion covers to personalize your home decor." onclick="addToCart(this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
             </button>
-            <button class="pcta" data-product="Custom Cushion Cover" data-price="Rs.319" data-desc="Soft and durable cushion covers to personalize your home decor." onclick="orderProduct(this)">Order Now</button>
+            <button class="pcta" data-product="Cushion Printing" data-price="Rs.349" data-desc="Soft and durable cushion covers to personalize your home decor." onclick="orderProduct(this)">Order Now</button>
           </div>
         </div>
       </div>
 
-      <div class="product-card fade-up" data-cat="covers" data-product="Mobile Cover" data-price="Rs.220" data-desc="Tough and stylish mobile back covers customized for your phone model.">
+      <div class="product-card fade-up d1" data-cat="homeDecor" data-product="Custom Photo Frame" data-price="Rs.349" data-desc="Preserve your best moments in a stylish and personalized photo frame.">
+        <div class="pimg-wrap">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_x0QCyHgwyXP3JaWZLft3eI7bFdn_i69YeaiMUxC87UEsRFfDSRSWeTeP&s=10" alt="Photo Frame" loading="lazy"/>
+          <div class="pbadge purple">GIFT SPECIAL</div>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Custom Photo Frame</div>
+          <div class="pdesc">Preserve your best moments in a stylish and personalized photo frame.</div>
+          <div class="pfooter">
+            <div class="pprice">Rs.349</div>
+            <button class="pcta-cart" data-product="Custom Photo Frame" data-price="Rs.349" data-desc="Preserve your best moments in a stylish and personalized photo frame." onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Custom Photo Frame" data-price="Rs.349" data-desc="Preserve your best moments in a stylish and personalized photo frame." onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card fade-up d2" data-cat="homeDecor" data-product="Photo Slate (Stone Frame)" data-price="Rs.449" data-desc="Premium stone slate photo print — a unique and elegant wall decor gift.">
+        <div class="pimg-wrap">
+          <img src="https://artpix3d.com/content/products/1850247/conversions/092e3b59-43a0-426f-8e09-ca47ef53483a-thumb_1_1_750X750.jpg" alt="Photo Slate" loading="lazy"/>
+          <div class="pbadge blue">NEW</div>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Photo Slate (Stone Frame)</div>
+          <div class="pdesc">Premium stone slate photo print — a unique and elegant wall decor gift.</div>
+          <div class="pfooter">
+            <div class="pprice">Rs.449</div>
+            <button class="pcta-cart" data-product="Photo Slate (Stone Frame)" data-price="Rs.449" data-desc="Premium stone slate photo print — unique and elegant wall decor." onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Photo Slate (Stone Frame)" data-price="Rs.449" data-desc="Premium stone slate photo print — unique and elegant wall decor." onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card fade-up d1" data-cat="homeDecor" data-product="Customized Bottle" data-price="Rs.299" data-desc="High-quality metal water bottles with your name or photo.">
+        <div class="pimg-wrap">
+          <img src="https://savrigifts.com/cdn/shop/files/1_45_-Photoroom_1_800x800.jpg?v=1750851272" alt="Bottle" loading="lazy"/>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Customized Bottle</div>
+          <div class="pdesc">High-quality metal water bottles with your name or photo.</div>
+          <div class="pfooter">
+            <div class="pprice">Rs.299</div>
+            <button class="pcta-cart" data-product="Customized Bottle" data-price="Rs.299" data-desc="High-quality metal water bottles with your name or photo." onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Customized Bottle" data-price="Rs.299" data-desc="High-quality metal water bottles with your name or photo." onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card fade-up d2" data-cat="homeDecor" data-product="Tumbler" data-price="Rs.399" data-desc="Insulated tumbler with custom print — keeps drinks hot or cold for hours.">
+        <div class="pimg-wrap">
+          <img src="https://bulktumblers.com/cdn/shop/files/40-oz-insulated-promo-stanley-style-straw-lid-charger-laser-engraved-bulk-logo-wholesale-POD-03_701x700.png?v=1699782859" alt="Tumbler" loading="lazy"/>
+          <div class="pbadge blue">NEW</div>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Tumbler</div>
+          <div class="pdesc">Insulated tumbler with custom print — keeps drinks hot or cold for hours.</div>
+          <div class="pfooter">
+            <div class="pprice">Rs.399</div>
+            <button class="pcta-cart" data-product="Tumbler" data-price="Rs.399" data-desc="Insulated tumbler with custom print — keeps drinks hot or cold." onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Tumbler" data-price="Rs.399" data-desc="Insulated tumbler with custom print — keeps drinks hot or cold." onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PHONE COVERS ── -->
+      <div class="product-card fade-up" data-cat="covers" data-product="Mobile Cover" data-price="Rs.249" data-desc="Tough and stylish mobile back covers customized for your phone model.">
         <div class="pimg-wrap">
           <img src="https://m.media-amazon.com/images/I/71CspETzWIL._AC_UF1000,1000_QL80_FMwebp_.jpg" alt="Mobile Cover" loading="lazy"/>
         </div>
@@ -246,16 +393,17 @@
           <div class="pname">Mobile Cover</div>
           <div class="pdesc">Tough and stylish mobile back covers customized for your phone model.</div>
           <div class="pfooter">
-            <div class="pprice">Rs.220</div>
-            <button class="pcta-cart" data-product="Mobile Cover" data-price="Rs.220" data-desc="Tough and stylish mobile back covers customized for your phone model." onclick="addToCart(this)">
+            <div class="pprice">Rs.249</div>
+            <button class="pcta-cart" data-product="Mobile Cover" data-price="Rs.249" data-desc="Tough and stylish mobile back covers customized for your phone model." onclick="addToCart(this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
             </button>
-            <button class="pcta" data-product="Mobile Cover" data-price="Rs.220" data-desc="Tough and stylish mobile back covers customized for your phone model." onclick="orderProduct(this)">Order Now</button>
+            <button class="pcta" data-product="Mobile Cover" data-price="Rs.249" data-desc="Tough and stylish mobile back covers customized for your phone model." onclick="orderProduct(this)">Order Now</button>
           </div>
         </div>
       </div>
 
-      <div class="product-card fade-up" data-cat="accessories" data-product="Custom Keychain" data-price="Rs.120" data-desc="Personalized keychains available in various shapes and materials.">
+      <!-- ── ACCESSORIES ── -->
+      <div class="product-card fade-up" data-cat="accessories" data-product="Custom Keychain" data-price="Rs.129" data-desc="Personalized keychains available in various shapes and materials.">
         <div class="pimg-wrap">
           <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRA_ZkOI6911IreNWMC2Pf32MmjYQJdm4r04KBTCig8Hiflk6UKOfQrYJxn&s=10" alt="Keychain" loading="lazy"/>
         </div>
@@ -263,33 +411,86 @@
           <div class="pname">Custom Keychain</div>
           <div class="pdesc">Personalized keychains available in various shapes and materials.</div>
           <div class="pfooter">
-            <div class="pprice">Rs.120</div>
-            <button class="pcta-cart" data-product="Custom Keychain" data-price="Rs.120" data-desc="Personalized keychains available in various shapes and materials." onclick="addToCart(this)">
+            <div class="pprice">Rs.129</div>
+            <button class="pcta-cart" data-product="Custom Keychain" data-price="Rs.129" data-desc="Personalized keychains available in various shapes and materials." onclick="addToCart(this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
             </button>
-            <button class="pcta" data-product="Custom Keychain" data-price="Rs.120" data-desc="Personalized keychains available in various shapes and materials." onclick="orderProduct(this)">Order Now</button>
+            <button class="pcta" data-product="Custom Keychain" data-price="Rs.129" data-desc="Personalized keychains available in various shapes and materials." onclick="orderProduct(this)">Order Now</button>
           </div>
         </div>
       </div>
 
-      <div class="product-card fade-up" data-cat="accessories" data-product="Custom Mouse Pad" data-price="Rs.149" data-desc="Smooth finish mouse pads with high-quality printing for your desk.">
+      <div class="product-card fade-up d1" data-cat="accessories" data-product="Custom Mouse Pad" data-price="Rs.199" data-desc="Smooth finish mouse pads with high-quality printing for your desk.">
         <div class="pimg-wrap">
-          <img src="https://m.media-amazon.com/images/I/71VmAz4NIcL._AC_UF1000,1000_QL80_FMwebp_.jpg" alt="Mouse Pad" loading="lazy"/>
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRtdRyKN40LgmLApi5FZtd1rob-Mh3rHdcMN8lwlw49kA&s=10" alt="Mouse Pad" loading="lazy"/>
         </div>
         <div class="pinfo">
           <div class="pname">Custom Mouse Pad</div>
           <div class="pdesc">Smooth finish mouse pads with high-quality printing for your desk.</div>
           <div class="pfooter">
-            <div class="pprice">Rs.149</div>
-            <button class="pcta-cart" data-product="Custom Mouse Pad" data-price="Rs.149" data-desc="Smooth finish mouse pads with high-quality printing for your desk." onclick="addToCart(this)">
+            <div class="pprice">Rs.199</div>
+            <button class="pcta-cart" data-product="Custom Mouse Pad" data-price="Rs.199" data-desc="Smooth finish mouse pads with high-quality printing for your desk." onclick="addToCart(this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
             </button>
-            <button class="pcta" data-product="Custom Mouse Pad" data-price="Rs.149" data-desc="Smooth finish mouse pads with high-quality printing for your desk." onclick="orderProduct(this)">Order Now</button>
+            <button class="pcta" data-product="Custom Mouse Pad" data-price="Rs.199" data-desc="Smooth finish mouse pads with high-quality printing for your desk." onclick="orderProduct(this)">Order Now</button>
           </div>
         </div>
       </div>
 
-      <div class="product-card fade-up" data-cat="accessories" data-product="Photo Puzzle" data-price="Rs.369" data-desc="Turn your favorite memories into a fun jigsaw puzzle for all ages.">
+      <div class="product-card fade-up d2" data-cat="accessories" data-product="Pen Printing" data-price="Rs.99" data-desc="Premium pens customized with your name or logo, perfect for gifting.">
+        <div class="pimg-wrap">
+          <img src="https://www.thecountrychiccottage.net/wp-content/uploads/2023/03/sublimation-pens-15-of-22.jpg" alt="Pen Printing" loading="lazy"/>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Pen Printing</div>
+          <div class="pdesc">Premium pens customized with your name or logo, perfect for gifting.</div>
+          <div class="pfooter">
+            <div class="pprice">Rs.99</div>
+            <button class="pcta-cart" data-product="Pen Printing" data-price="Rs.99" data-desc="Premium pens customized with your name or logo, perfect for gifting." onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Pen Printing" data-price="Rs.99" data-desc="Premium pens customized with your name or logo, perfect for gifting." onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card fade-up d3" data-cat="accessories" data-product="Clock Printing" data-price="Rs.399" data-desc="Custom wall clock with your photo or design — a unique gift for any occasion.">
+        <div class="pimg-wrap">
+          <img src="https://m.media-amazon.com/images/I/41p9Lj8iSWL._AC_UF894,1000_QL80_.jpg" alt="Clock Printing" loading="lazy"/>
+          <div class="pbadge blue">NEW</div>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Clock Printing</div>
+          <div class="pdesc">Custom wall clock with your photo or design — a unique gift for any occasion.</div>
+          <div class="pfooter">
+            <div class="pprice">Rs.399</div>
+            <button class="pcta-cart" data-product="Clock Printing" data-price="Rs.399" data-desc="Custom wall clock with your photo or design." onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Clock Printing" data-price="Rs.399" data-desc="Custom wall clock with your photo or design." onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card fade-up d1" data-cat="accessories" data-product="Customized Gifts" data-price="Rs.299" data-desc="Personalised gift combos starting Rs.299 — perfect for birthdays, anniversaries and more.">
+        <div class="pimg-wrap">
+          <img src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=500&q=80" alt="Customized Gifts" loading="lazy"/>
+          <div class="pbadge purple">GIFT SPECIAL</div>
+        </div>
+        <div class="pinfo">
+          <div class="pname">Customized Gifts</div>
+          <div class="pdesc">Personalised gift combos starting Rs.299 — perfect for birthdays, anniversaries and more.</div>
+          <div class="pfooter">
+            <div class="pprice">Starting Rs.299</div>
+            <button class="pcta-cart" data-product="Customized Gifts" data-price="Rs.299" data-desc="Personalised gift combos — perfect for birthdays and anniversaries." onclick="addToCart(this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
+            </button>
+            <button class="pcta" data-product="Customized Gifts" data-price="Rs.299" data-desc="Personalised gift combos — perfect for birthdays and anniversaries." onclick="orderProduct(this)">Order Now</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card fade-up d2" data-cat="accessories" data-product="Photo Puzzle" data-price="Rs.369" data-desc="Turn your favorite memories into a fun jigsaw puzzle for all ages.">
         <div class="pimg-wrap">
           <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTe-jFhp2quN9xVsZmjw1oYv1Sr1gubeEx7WRm43T8ZLGyNxNSw-e371oax&s=10" alt="Photo Puzzle" loading="lazy"/>
         </div>
@@ -306,19 +507,19 @@
         </div>
       </div>
 
-      <div class="product-card fade-up" data-cat="homeDecor" data-product="Customized Water Bottle" data-price="Rs.329" data-desc="High-quality metal water bottles with your name or photo.">
+      <div class="product-card fade-up d3" data-cat="accessories" data-product="Custom Coaster" data-price="Rs.139" data-desc="Durable and aesthetic coasters to protect your desk with custom designs.">
         <div class="pimg-wrap">
-          <img src="https://savrigifts.com/cdn/shop/files/1_45_-Photoroom_1_800x800.jpg?v=1750851272" alt="Bottle" loading="lazy"/>
+          <img src="https://www.yourprint.in/new-admin-ajax.php?action=resize_outer_image&cfcache=all&url=meds3/d-i-o/Coasters/coaster_MDF_square_d300_o.jpg&resizeTo=600" alt="Coaster" loading="lazy"/>
         </div>
         <div class="pinfo">
-          <div class="pname">Customized Water Bottle</div>
-          <div class="pdesc">High-quality metal water bottles with your name or photo.</div>
+          <div class="pname">Custom Coaster</div>
+          <div class="pdesc">Durable and aesthetic coasters to protect your desk with custom designs.</div>
           <div class="pfooter">
-            <div class="pprice">Rs.329</div>
-            <button class="pcta-cart" data-product="Customized Water Bottle" data-price="Rs.329" data-desc="High-quality metal water bottles with your name or photo." onclick="addToCart(this)">
+            <div class="pprice">Rs.139</div>
+            <button class="pcta-cart" data-product="Custom Coaster" data-price="Rs.139" data-desc="Durable and aesthetic coasters with custom designs." onclick="addToCart(this)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
             </button>
-            <button class="pcta" data-product="Customized Water Bottle" data-price="Rs.329" data-desc="High-quality metal water bottles with your name or photo." onclick="orderProduct(this)">Order Now</button>
+            <button class="pcta" data-product="Custom Coaster" data-price="Rs.139" data-desc="Durable and aesthetic coasters with custom designs." onclick="orderProduct(this)">Order Now</button>
           </div>
         </div>
       </div>
@@ -336,57 +537,6 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
             </button>
             <button class="pcta" data-product="Fridge Magnet" data-price="Rs.109" data-desc="Cute and customized fridge magnets to keep your memories on display." onclick="orderProduct(this)">Order Now</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="product-card fade-up" data-cat="homeDecor" data-product="Custom Photo Frame" data-price="Rs.149" data-desc="Preserve your best moments in a stylish and personalized photo frame.">
-        <div class="pimg-wrap">
-          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_x0QCyHgwyXP3JaWZLft3eI7bFdn_i69YeaiMUxC87UEsRFfDSRSWeTeP&s=10" alt="Photo Frame" loading="lazy"/>
-        </div>
-        <div class="pinfo">
-          <div class="pname">Custom Photo Frame</div>
-          <div class="pdesc">Preserve your best moments in a stylish and personalized photo frame.</div>
-          <div class="pfooter">
-            <div class="pprice">Rs.149</div>
-            <button class="pcta-cart" data-product="Custom Photo Frame" data-price="Rs.149" data-desc="Preserve your best moments in a stylish and personalized photo frame." onclick="addToCart(this)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
-            </button>
-            <button class="pcta" data-product="Custom Photo Frame" data-price="Rs.149" data-desc="Preserve your best moments in a stylish and personalized photo frame." onclick="orderProduct(this)">Order Now</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="product-card fade-up" data-cat="accessories" data-product="Sublimation Pen" data-price="Rs.89" data-desc="Premium pens customized with your name or logo, perfect for gifting.">
-        <div class="pimg-wrap">
-          <img src="https://www.thecountrychiccottage.net/wp-content/uploads/2023/03/sublimation-pens-15-of-22.jpg" alt="Sublimation Pen" loading="lazy"/>
-        </div>
-        <div class="pinfo">
-          <div class="pname">Sublimation Pen</div>
-          <div class="pdesc">Premium pens customized with your name or logo, perfect for gifting.</div>
-          <div class="pfooter">
-            <div class="pprice">Rs.89</div>
-            <button class="pcta-cart" data-product="Sublimation Pen" data-price="Rs.89" data-desc="Premium pens customized with your name or logo, perfect for gifting." onclick="addToCart(this)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
-            </button>
-            <button class="pcta" data-product="Sublimation Pen" data-price="Rs.89" data-desc="Premium pens customized with your name or logo, perfect for gifting." onclick="orderProduct(this)">Order Now</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="product-card fade-up" data-cat="accessories" data-product="Custom Coaster" data-price="Rs.139" data-desc="Durable and aesthetic coasters to protect your desk with custom designs.">
-        <div class="pimg-wrap">
-          <img src="https://www.yourprint.in/new-admin-ajax.php?action=resize_outer_image&cfcache=all&url=meds3/d-i-o/Coasters/coaster_MDF_square_d300_o.jpg&resizeTo=600" alt="Coaster" loading="lazy"/>
-        </div>
-        <div class="pinfo">
-          <div class="pname">Custom Coaster</div>
-          <div class="pdesc">Durable and aesthetic coasters to protect your desk with custom designs.</div>
-          <div class="pfooter">
-            <div class="pprice">Rs.139</div>
-            <button class="pcta-cart" data-product="Custom Coaster" data-price="Rs.139" data-desc="Durable and aesthetic coasters to protect your desk with custom designs." onclick="addToCart(this)">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6"/></svg> Add to Cart
-            </button>
-            <button class="pcta" data-product="Custom Coaster" data-price="Rs.139" data-desc="Durable and aesthetic coasters to protect your desk with custom designs." onclick="orderProduct(this)">Order Now</button>
           </div>
         </div>
       </div>
