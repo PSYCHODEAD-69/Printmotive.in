@@ -5,15 +5,14 @@
 const CACHE_NAME = "printmotive-v1";
 
 const ASSETS = [
-  "/",
-  "/index.html",
-  "/style.css",
-  "/script.js",
-  "/manifest.json",
-  "/logo-192_192.jpg",
-  "/logo-512_512.jpg"
+  "/Printmotive.in/",
+  "/Printmotive.in/index.html",
+  "/Printmotive.in/style.css",
+  "/Printmotive.in/script.js",
+  "/Printmotive.in/manifest.json",
+  "/Printmotive.in/logo-192_192.jpg",
+  "/Printmotive.in/logo-512_512.jpg"
 ];
-
 /* ── Install: Cache all assets ── */
 self.addEventListener("install", e => {
   e.waitUntil(
