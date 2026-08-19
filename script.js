@@ -9,7 +9,7 @@ const BRAND_NAME = "PrintMotive.in";
 const WEBSITE    = "printmotive.in";
 
 /* ── API URL — Replace with your Cloudflare Worker URL ── */
-const PM_API = "https://printmotive-worker.devpandey618.workers.dev";
+const PM_API = "https://api.printmotive.in";
 
 /* ══════════════════════════════════════
    PRODUCTS — Dynamic load from API
@@ -49,7 +49,7 @@ function renderCategoryTabs() {
   const wrap = document.getElementById("catGrid");
   if (!wrap) return;
 
-  const allImg = "https://assets.psychodead.qzz.io/products/file_00000000b1bc81fab2b710fe275cabf7.png";
+  const allImg = "https://assets.printmotive.in/products/file_00000000b1bc81fab2b710fe275cabf7.png";
   const placeholderImg = "https://via.placeholder.com/60?text=%20";
 
   const tabsHtml = [`
