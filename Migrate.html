@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PrintMotive — Domain Migration Tool</title>
+<style>
+  :root{
+    --bg:#0f1115; --surface:#171a21; --surface2:#1f232c; --border:#2a2f3a;
+    --text:#eef0f3; --muted:#8b92a3; --accent:#ff4d4f; --green:#3ecf8e; --yellow:#e8b93f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:2rem 1rem 4rem;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+  h1{font-size:1.5rem;margin-bottom:.25rem;}
+  .sub{color:var(--muted);font-size:.92rem;margin-bottom:2rem;}
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:1.25rem 1.25rem; margin-bottom:1.25rem;
+  }
+  label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:.4rem;}
+  input[type=text], input[type=password]{
+    width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text);
+    padding:.65rem .8rem; border-radius:8px; font-size:.95rem; margin-bottom:.9rem;
+  }
+  input:focus{outline:none;border-color:var(--accent);}
+  button{
+    background:var(--accent); color:#fff; border:none; padding:.7rem 1.2rem;
+    border-radius:8px; font-size:.92rem; font-weight:600; cursor:pointer;
+  }
+  button:disabled{opacity:.5;cursor:not-allowed;}
+  button.secondary{background:var(--surface2); border:1px solid var(--border); color:var(--text);}
+  button.confirm{background:var(--green);}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;}
+  .status{font-size:.88rem;margin-top:.7rem;white-space:pre-wrap;}
+  .status.err{color:var(--accent);}
+  .status.ok{color:var(--green);}
+  .status.info{color:var(--muted);}
+  .diff-item{
+    background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+    padding:.7rem .9rem; margin-bottom:.6rem; font-size:.84rem;
+  }
+  .diff-item .name{font-weight:600;margin-bottom:.4rem;}
+  .diff-item .url{word-break:break-all;color:var(--muted);font-family:monospace;font-size:.78rem;}
+  .diff-item .old{color:var(--yellow);}
+  .diff-item .new{color:var(--green);}
+  .arrow{color:var(--muted);margin:0 .3rem;}
+  .summary{font-size:.95rem;margin-bottom:1rem;}
+  .badge{
+    display:inline-block;background:var(--surface2);border:1px solid var(--border);
+    padding:2px 8px;border-radius:20px;font-size:.75rem;color:var(--muted);margin-left:.4rem;
+  }
+  .hidden{display:none;}
+  progress{width:100%;height:8px;margin-top:.8rem;}
+  .log{max-height:220px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);
+       border-radius:8px;padding:.7rem .9rem;font-size:.8rem;font-family:monospace;margin-top:.8rem;}
+  .log div{margin-bottom:2px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔧 Domain Migration Tool</h1>
+  <div class="sub">Replaces old asset-domain URLs with the new domain across products &amp; categories in KV. Nothing else in the data is touched. Use once, then discard this file.</div>
+
+  <!-- STEP 1: LOGIN -->
+  <div class="card" id="loginCard">
+    <label>API Base URL</label>
+    <input type="text" id="apiBase" value="https://api.printmotive.in" placeholder="https://api.printmotive.in"/>
+    <label>Old domain (to find)</label>
+    <input type="text" id="oldDomain" value="assets.psychodead.qzz.io" placeholder="assets.psychodead.qzz.io"/>
+    <label>New domain (to replace with)</label>
+    <input type="text" id="newDomain" value="assets.printmotive.in" placeholder="assets.printmotive.in"/>
+    <label>Admin Username</label>
+    <input type="text" id="user" placeholder="admin username"/>
+    <label>Admin Password</label>
+    <input type="password" id="pass" placeholder="admin password"/>
+    <div class="row">
+      <button onclick="doLogin()" id="loginBtn">Login &amp; Scan</button>
+    </div>
+    <div class="status" id="loginStatus"></div>
+  </div>
+
+  <!-- STEP 2: PREVIEW -->
+  <div class="card hidden" id="previewCard">
+    <div class="summary" id="summaryText"></div>
+    <div id="diffList"></div>
+    <div class="row" style="margin-top:1rem;">
+      <button class="confirm" id="applyBtn" onclick="applyMigration()">Apply Migration</button>
+      <button class="secondary" onclick="location.reload()">Cancel / Rescan</button>
+    </div>
+    <progress id="progressBar" class="hidden" max="100" value="0"></progress>
+    <div class="log hidden" id="log"></div>
+    <div class="status" id="applyStatus"></div>
+  </div>
+</div>
+
+<script>
+let API = "";
+let TOKEN = "";
+let OLD_DOMAIN = "";
+let NEW_DOMAIN = "";
+let productChanges = [];   // { id, name, updates: {imageUrl?, media?} }
+let categoryChanges = [];  // { id, label, image }
+
+function setStatus(el, msg, cls) {
+  el.textContent = msg;
+  el.className = "status " + (cls || "");
+}
+
+function replaceDomain(str) {
+  if (typeof str !== "string" || !str.includes(OLD_DOMAIN)) return str;
+  return str.split(OLD_DOMAIN).join(NEW_DOMAIN);
+}
+
+async function doLogin() {
+  const apiBase = document.getElementById("apiBase").value.trim().replace(/\/$/, "");
+  OLD_DOMAIN = document.getElementById("oldDomain").value.trim();
+  NEW_DOMAIN = document.getElementById("newDomain").value.trim();
+  const username = document.getElementById("user").value.trim();
+  const password = document.getElementById("pass").value;
+  const btn = document.getElementById("loginBtn");
+  const statusEl = document.getElementById("loginStatus");
+
+  if (!apiBase || !OLD_DOMAIN || !NEW_DOMAIN || !username || !password) {
+    setStatus(statusEl, "Please fill in all fields.", "err");
+    return;
+  }
+
+  API = apiBase;
+  btn.disabled = true;
+  setStatus(statusEl, "Logging in...", "info");
+
+  try {
+    const res = await fetch(`${API}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!data.token) {
+      setStatus(statusEl, "Login failed: " + (data.error || "Unknown error"), "err");
+      btn.disabled = false;
+      return;
+    }
+    TOKEN = data.token;
+    setStatus(statusEl, "Logged in. Scanning products & categories...", "info");
+    await scan();
+  } catch (err) {
+    setStatus(statusEl, "Error: " + err.message, "err");
+    btn.disabled = false;
+  }
+}
+
+async function scan() {
+  const statusEl = document.getElementById("loginStatus");
+  try {
+    const [prodRes, catRes] = await Promise.all([
+      fetch(`${API}/api/products`),
+      fetch(`${API}/api/categories`)
+    ]);
+    const products = await prodRes.json();
+    const categories = await catRes.json();
+
+    productChanges = [];
+    categoryChanges = [];
+
+    for (const p of products) {
+      let changed = false;
+      const updates = {};
+
+      if (p.imageUrl && p.imageUrl.includes(OLD_DOMAIN)) {
+        updates.imageUrl = replaceDomain(p.imageUrl);
+        changed = true;
+      }
+      if (Array.isArray(p.media) && p.media.some(m => m.url && m.url.includes(OLD_DOMAIN))) {
+        updates.media = p.media.map(m => ({
+          ...m,
+          url: replaceDomain(m.url)
+        }));
+        changed = true;
+      }
+
+      if (changed) {
+        productChanges.push({
+          id: p.id,
+          name: p.name || p.id,
+          oldImageUrl: p.imageUrl,
+          newImageUrl: updates.imageUrl || p.imageUrl,
+          oldMedia: p.media || [],
+          newMedia: updates.media || p.media || [],
+          updates
+        });
+      }
+    }
+
+    for (const c of categories) {
+      if (c.image && c.image.includes(OLD_DOMAIN)) {
+        categoryChanges.push({
+          id: c.id,
+          label: c.label,
+          oldImage: c.image,
+          newImage: replaceDomain(c.image)
+        });
+      }
+    }
+
+    renderPreview();
+    setStatus(statusEl, `Scan complete.`, "ok");
+  } catch (err) {
+    setStatus(statusEl, "Scan failed: " + err.message, "err");
+    document.getElementById("loginBtn").disabled = false;
+  }
+}
+
+function renderPreview() {
+  document.getElementById("loginCard").classList.add("hidden");
+  const previewCard = document.getElementById("previewCard");
+  previewCard.classList.remove("hidden");
+
+  const totalItems = productChanges.length + categoryChanges.length;
+  const summaryEl = document.getElementById("summaryText");
+  const listEl = document.getElementById("diffList");
+
+  if (totalItems === 0) {
+    summaryEl.innerHTML = `✅ Nothing to migrate — no URLs found containing <code>${OLD_DOMAIN}</code>.`;
+    document.getElementById("applyBtn").classList.add("hidden");
+    return;
+  }
+
+  summaryEl.innerHTML =
+    `Found <strong>${productChanges.length}</strong> product(s) and <strong>${categoryChanges.length}</strong> categor${categoryChanges.length===1?'y':'ies'} to update.` +
+    `<span class="badge">${OLD_DOMAIN} → ${NEW_DOMAIN}</span>`;
+
+  let html = "";
+
+  for (const c of categoryChanges) {
+    html += `
+      <div class="diff-item">
+        <div class="name">📁 Category: ${escapeHtml(c.label)} <span class="badge">${escapeHtml(c.id)}</span></div>
+        <div class="url old">− ${escapeHtml(c.oldImage)}</div>
+        <div class="url new">+ ${escapeHtml(c.newImage)}</div>
+      </div>`;
+  }
+
+  for (const p of productChanges) {
+    let urlsHtml = "";
+    if (p.oldImageUrl !== p.newImageUrl) {
+      urlsHtml += `
+        <div class="url old">− ${escapeHtml(p.oldImageUrl)}</div>
+        <div class="url new">+ ${escapeHtml(p.newImageUrl)}</div>`;
+    }
+    p.oldMedia.forEach((m, i) => {
+      const newUrl = p.newMedia[i]?.url;
+      if (m.url !== newUrl) {
+        urlsHtml += `
+          <div class="url old">− ${escapeHtml(m.url)}</div>
+          <div class="url new">+ ${escapeHtml(newUrl)}</div>`;
+      }
+    });
+    html += `
+      <div class="diff-item">
+        <div class="name">🛍️ ${escapeHtml(p.name)} <span class="badge">${escapeHtml(p.id)}</span></div>
+        ${urlsHtml}
+      </div>`;
+  }
+
+  listEl.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  if (typeof str !== "string") return str;
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+async function applyMigration() {
+  const applyBtn = document.getElementById("applyBtn");
+  const applyStatus = document.getElementById("applyStatus");
+  const progressBar = document.getElementById("progressBar");
+  const logEl = document.getElementById("log");
+
+  applyBtn.disabled = true;
+  progressBar.classList.remove("hidden");
+  logEl.classList.remove("hidden");
+  logEl.innerHTML = "";
+
+  const total = productChanges.length + categoryChanges.length;
+  let done = 0;
+  let failCount = 0;
+
+  function logLine(msg, isErr) {
+    const div = document.createElement("div");
+    div.style.color = isErr ? "#ff4d4f" : "#3ecf8e";
+    div.textContent = msg;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  // Update products
+  for (const p of productChanges) {
+    try {
+      const res = await fetch(`${API}/api/admin/products/${p.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${TOKEN}`
+        },
+        body: JSON.stringify(p.updates)
+      });
+      const data = await res.json();
+      if (data.success) {
+        logLine(`✔ Product updated: ${p.name}`);
+      } else {
+        logLine(`✘ Product failed: ${p.name} — ${data.error || "unknown error"}`, true);
+        failCount++;
+      }
+    } catch (err) {
+      logLine(`✘ Product error: ${p.name} — ${err.message}`, true);
+      failCount++;
+    }
+    done++;
+    progressBar.value = Math.round((done / total) * 100);
+  }
+
+  // Update categories
+  for (const c of categoryChanges) {
+    try {
+      const res = await fetch(`${API}/api/admin/categories/${encodeURIComponent(c.id)}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${TOKEN}`
+        },
+        body: JSON.stringify({ label: c.label, image: c.newImage })
+      });
+      const data = await res.json();
+      if (data.success) {
+        logLine(`✔ Category updated: ${c.label}`);
+      } else {
+        logLine(`✘ Category failed: ${c.label} — ${data.error || "unknown error"}`, true);
+        failCount++;
+      }
+    } catch (err) {
+      logLine(`✘ Category error: ${c.label} — ${err.message}`, true);
+      failCount++;
+    }
+    done++;
+    progressBar.value = Math.round((done / total) * 100);
+  }
+
+  if (failCount === 0) {
+    setStatus(applyStatus, `✅ Migration complete. All ${total} item(s) updated successfully.`, "ok");
+  } else {
+    setStatus(applyStatus, `⚠️ Migration finished with ${failCount} failure(s) out of ${total}. Check log above.`, "err");
+  }
+  applyBtn.disabled = true;
+}
+</script>
+</body>
+</html>
