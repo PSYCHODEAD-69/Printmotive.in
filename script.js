@@ -515,13 +515,14 @@ function changeFeaturedMedia(direction) {
   `;
   document.head.appendChild(s);
 })();
-function buildWALink(product, price, desc, size) {
+function buildWALink(product, price, desc, size, sides) {
   const msg = [
     `Hello ${BRAND_NAME}!`,
     ``,
     `I want to place an order for:`,
     `Product: ${product}`,
     ...(size ? [`Size: ${size}`] : []),
+    ...(sides && sides.length ? [`Print Side: ${sides.join(", ")}`] : []),
     `Starting Price: ${price}`,
     `Details: ${desc}`,
     ``,
@@ -532,7 +533,7 @@ function buildWALink(product, price, desc, size) {
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
-function buildEmailLink(product, price, desc, size) {
+function buildEmailLink(product, price, desc, size, sides) {
   const subject = `Order Enquiry: ${product} — ${BRAND_NAME}`;
   const body = [
     `Hello ${BRAND_NAME},`,
@@ -541,6 +542,7 @@ function buildEmailLink(product, price, desc, size) {
     ``,
     `Product     : ${product}`,
     ...(size ? [`Size        : ${size}`] : []),
+    ...(sides && sides.length ? [`Print Side  : ${sides.join(", ")}`] : []),
     `Starting Price : ${price}`,
     `Details     : ${desc}`,
     ``,
@@ -568,15 +570,15 @@ function buildGeneralWALink() {
 /* ══════════════════════════════════════
    ORDER POPUP MODAL
    ══════════════════════════════════════ */
-function orderProduct(el, size) {
+function orderProduct(el, size, sides) {
   const product = el.dataset.product || "Custom Product";
   const price   = el.dataset.price   || "Contact for pricing";
   const desc    = el.dataset.desc    || "Custom print order";
   addRipple(el);
-  showOrderModal(product, price, desc, size || null);
+  showOrderModal(product, price, desc, size || null, sides || []);
 }
 
-function showOrderModal(product, price, desc, size) {
+function showOrderModal(product, price, desc, size, sides) {
   const old = document.getElementById("pm-modal");
   if (old) old.remove();
 
@@ -595,7 +597,7 @@ function showOrderModal(product, price, desc, size) {
           <svg viewBox="0 0 24 24" fill="white" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
           Order via WhatsApp
         </a>
-        <a href="${buildEmailLink(product, price, desc, size)}" class="pm-btn-email">
+        <a href="${buildEmailLink(product, price, desc, size, sides)}" class="pm-btn-email">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           Order via Email
         </a>
@@ -626,13 +628,13 @@ function showOrderModal(product, price, desc, size) {
 
   modal.querySelector("#pmBtnWA").addEventListener("click", function(e) {
     e.preventDefault();
-    showDeliveryPopup("wa", buildWALink(product, price, desc, size), null, product, price, false, size);
+    showDeliveryPopup("wa", buildWALink(product, price, desc, size, sides), null, product, price, false, size, sides);
     closeModal();
   });
 
   modal.querySelector(".pm-btn-email").addEventListener("click", function(e) {
     e.preventDefault();
-    showDeliveryPopup("email", null, buildEmailLink(product, price, desc, size), product, price, false, size);
+    showDeliveryPopup("email", null, buildEmailLink(product, price, desc, size, sides), product, price, false, size, sides);
     closeModal();
   });
 
@@ -649,6 +651,7 @@ function showOrderModal(product, price, desc, size) {
    before letting the user Add to Cart / Order.
    ══════════════════════════════════════ */
 let detailModalSelectedSize = null;
+let detailModalSelectedSides = [];
 let detailModalMedia = [];
 let detailModalIndex = 0;
 let detailModalOutOfStock = false;
@@ -663,6 +666,7 @@ function openProductDetail(productId, evt) {
   if (!p) return;
 
   detailModalSelectedSize = null;
+  detailModalSelectedSides = [];
   detailModalIndex = 0;
   detailModalOutOfStock = p.inStock === false;
 
@@ -671,6 +675,7 @@ function openProductDetail(productId, evt) {
     : (p.imageUrl ? [{ url: p.imageUrl, type: "image" }] : []);
   detailModalMedia = media;
   const hasSizes = Array.isArray(p.sizes) && p.sizes.length > 0;
+  const hasSides = Array.isArray(p.printSides) && p.printSides.length > 0;
 
   const old = document.getElementById("pm-detail-modal");
   if (old) old.remove();
@@ -708,13 +713,23 @@ function openProductDetail(productId, evt) {
           </div>
         ` : ""}
 
+        ${hasSides ? `
+          <div class="pm-dtl-sizes pm-dtl-sides">
+            <div class="pm-dtl-sizes-label">Select Print Side <span class="pm-dtl-required">*</span> <span class="pm-dtl-multi-hint">(choose one or more)</span></div>
+            <div class="pm-dtl-size-row" id="pmDtlSideRow">
+              ${p.printSides.map(side => `<button type="button" class="pm-dtl-size-chip pm-dtl-side-chip" data-side="${escapeHtml(side)}" onclick="toggleDetailSide(this)">${escapeHtml(side)}</button>`).join("")}
+            </div>
+            <div class="pm-dtl-size-hint" id="pmDtlSideHint">Please select at least one print side to continue</div>
+          </div>
+        ` : ""}
+
         <div class="pm-dtl-btns">
-          <button class="pc-btn-cart pm-dtl-btn-cart" id="pmDtlAddCart" ${(hasSizes || p.inStock === false) ? "disabled" : ""}
+          <button class="pc-btn-cart pm-dtl-btn-cart" id="pmDtlAddCart" ${(hasSizes || hasSides || p.inStock === false) ? "disabled" : ""}
             data-product="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-desc="${escapeHtml(p.description || p.name)}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             ${p.inStock === false ? "Out of Stock" : "Add to Cart"}
           </button>
-          <button class="pc-btn-order pm-dtl-btn-order" id="pmDtlOrderNow" ${(hasSizes || p.inStock === false) ? "disabled" : ""}
+          <button class="pc-btn-order pm-dtl-btn-order" id="pmDtlOrderNow" ${(hasSizes || hasSides || p.inStock === false) ? "disabled" : ""}
             data-product="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-desc="${escapeHtml(p.description || p.name)}">
             Order Now
           </button>
@@ -743,14 +758,16 @@ function openProductDetail(productId, evt) {
   modal.querySelector("#pmDtlAddCart").addEventListener("click", function() {
     if (detailModalOutOfStock) return;
     if (hasSizes && !detailModalSelectedSize) { flashSizeHint(); return; }
-    addToCart(this, detailModalSelectedSize);
+    if (hasSides && detailModalSelectedSides.length === 0) { flashSideHint(); return; }
+    addToCart(this, detailModalSelectedSize, detailModalSelectedSides);
     closeModal();
   });
 
   modal.querySelector("#pmDtlOrderNow").addEventListener("click", function() {
     if (detailModalOutOfStock) return;
     if (hasSizes && !detailModalSelectedSize) { flashSizeHint(); return; }
-    orderProduct(this, detailModalSelectedSize);
+    if (hasSides && detailModalSelectedSides.length === 0) { flashSideHint(); return; }
+    orderProduct(this, detailModalSelectedSize, detailModalSelectedSides);
     closeModal();
   });
 }
@@ -762,7 +779,9 @@ function selectDetailSize(btn) {
 
   const cartBtn  = document.getElementById("pmDtlAddCart");
   const orderBtn = document.getElementById("pmDtlOrderNow");
-  if (!detailModalOutOfStock) {
+  const sideRow  = document.getElementById("pmDtlSideRow");
+  const stillNeedsSide = sideRow && detailModalSelectedSides.length === 0;
+  if (!detailModalOutOfStock && !stillNeedsSide) {
     if (cartBtn)  cartBtn.disabled  = false;
     if (orderBtn) orderBtn.disabled = false;
   }
@@ -771,8 +790,51 @@ function selectDetailSize(btn) {
   if (hint) { hint.textContent = `Size: ${detailModalSelectedSize} selected`; hint.classList.add("ok"); }
 }
 
+/* Print Side is a checkbox-style multi-select: clicking a chip toggles it
+   in/out of detailModalSelectedSides, unlike size which is single-select. */
+function toggleDetailSide(btn) {
+  const side = btn.dataset.side;
+  if (detailModalSelectedSides.includes(side)) {
+    detailModalSelectedSides = detailModalSelectedSides.filter(s => s !== side);
+    btn.classList.remove("active");
+  } else {
+    detailModalSelectedSides.push(side);
+    btn.classList.add("active");
+  }
+
+  const cartBtn  = document.getElementById("pmDtlAddCart");
+  const orderBtn = document.getElementById("pmDtlOrderNow");
+  const sizeRow  = document.getElementById("pmDtlSizeRow");
+  const stillNeedsSize = sizeRow && !detailModalSelectedSize;
+  if (!detailModalOutOfStock && !stillNeedsSize && detailModalSelectedSides.length > 0) {
+    if (cartBtn)  cartBtn.disabled  = false;
+    if (orderBtn) orderBtn.disabled = false;
+  } else if (detailModalSelectedSides.length === 0) {
+    if (cartBtn)  cartBtn.disabled  = true;
+    if (orderBtn) orderBtn.disabled = true;
+  }
+
+  const hint = document.getElementById("pmDtlSideHint");
+  if (hint) {
+    if (detailModalSelectedSides.length > 0) {
+      hint.textContent = `Print Side: ${detailModalSelectedSides.join(", ")} selected`;
+      hint.classList.add("ok");
+    } else {
+      hint.textContent = "Please select at least one print side to continue";
+      hint.classList.remove("ok");
+    }
+  }
+}
+
 function flashSizeHint() {
   const hint = document.getElementById("pmDtlSizeHint");
+  if (!hint) return;
+  hint.classList.add("shake");
+  setTimeout(() => hint.classList.remove("shake"), 400);
+}
+
+function flashSideHint() {
+  const hint = document.getElementById("pmDtlSideHint");
   if (!hint) return;
   hint.classList.add("shake");
   setTimeout(() => hint.classList.remove("shake"), 400);
@@ -814,7 +876,7 @@ function changeDetailMedia(direction) {
   renderDetailMedia();
 }
 
-/* ── Card-level Add to Cart / Order buttons: route through the size flow ── */
+/* ── Card-level Add to Cart / Order buttons: route through the size/side flow ── */
 function handleCardAddToCart(el) {
   const id = el.dataset.id;
   const p  = allProducts.find(x => x.id === id);
@@ -822,13 +884,15 @@ function handleCardAddToCart(el) {
     showToast("This product is currently out of stock");
     return;
   }
-  if (p && Array.isArray(p.sizes) && p.sizes.length) {
-    // Sizes required — open the detail modal so the user must pick one
+  const needsSize = p && Array.isArray(p.sizes) && p.sizes.length;
+  const needsSide = p && Array.isArray(p.printSides) && p.printSides.length;
+  if (needsSize || needsSide) {
+    // Sizes/print sides required — open the detail modal so the user must pick
     openProductDetail(id);
-    showToast("Please select a size first");
+    showToast(needsSize && needsSide ? "Please select a size and print side first" : (needsSize ? "Please select a size first" : "Please select a print side first"));
     return;
   }
-  addToCart(el, null);
+  addToCart(el, null, []);
 }
 
 function handleCardOrderNow(el) {
@@ -838,12 +902,14 @@ function handleCardOrderNow(el) {
     showToast("This product is currently out of stock");
     return;
   }
-  if (p && Array.isArray(p.sizes) && p.sizes.length) {
+  const needsSize = p && Array.isArray(p.sizes) && p.sizes.length;
+  const needsSide = p && Array.isArray(p.printSides) && p.printSides.length;
+  if (needsSize || needsSide) {
     openProductDetail(id);
-    showToast("Please select a size first");
+    showToast(needsSize && needsSide ? "Please select a size and print side first" : (needsSize ? "Please select a size first" : "Please select a print side first"));
     return;
   }
-  orderProduct(el, null);
+  orderProduct(el, null, []);
 }
 
 /* ══════════════════════════════════════
@@ -1039,25 +1105,30 @@ function loadCart() {
   } catch { cart = []; }
 }
 
-function addToCart(el, size) {
+function addToCart(el, size, sides) {
   const product  = el.dataset.product;
   const price    = el.dataset.price;
   const desc     = el.dataset.desc;
   const priceNum = parseInt(price.replace(/[^0-9]/g, "")) || 0;
-  size = size || null;
+  size  = size || null;
+  sides = Array.isArray(sides) ? sides : [];
 
-  // Same product but a different size is a distinct cart line (e.g. one
-  // Medium and one Large of the same tee should show separately).
-  const existing = cart.find(i => i.product === product && i.size === size);
+  // Same product but a different size or print-side combo is a distinct
+  // cart line (e.g. one Medium/Front and one Large/Front+Back should show separately).
+  const sidesKey = sides.slice().sort().join(",");
+  const existing = cart.find(i => i.product === product && i.size === size && (i.sides || []).slice().sort().join(",") === sidesKey);
   if (existing) {
     existing.qty++;
   } else {
-    cart.push({ product, price, priceNum, desc, size, qty: 1 });
+    cart.push({ product, price, priceNum, desc, size, sides, qty: 1 });
   }
   saveCart();
   updateCartBadge();
   addRipple(el);
-  showToast(size ? `✓ ${product} (Size: ${size}) added to cart!` : `✓ ${product} added to cart!`);
+  const bits = [];
+  if (size) bits.push(`Size: ${size}`);
+  if (sides.length) bits.push(`Print Side: ${sides.join(", ")}`);
+  showToast(bits.length ? `✓ ${product} (${bits.join(" | ")}) added to cart!` : `✓ ${product} added to cart!`);
 }
 
 function updateCartBadge() {
@@ -1095,7 +1166,7 @@ function renderCartItems() {
   itemsEl.innerHTML = cart.map((item, idx) => `
     <div class="cart-item">
       <div class="ci-info">
-        <div class="ci-name">${escapeHtml(item.product)}${item.size ? ` <span class="ci-size">— Size: ${escapeHtml(item.size)}</span>` : ""}</div>
+        <div class="ci-name">${escapeHtml(item.product)}${item.size ? ` <span class="ci-size">— Size: ${escapeHtml(item.size)}</span>` : ""}${item.sides && item.sides.length ? ` <span class="ci-size ci-sides">— Print Side: ${escapeHtml(item.sides.join(", "))}</span>` : ""}</div>
         <div class="ci-price">${escapeHtml(item.price)} each &nbsp;·&nbsp;
           <span class="ci-subtotal">Rs.${item.priceNum * item.qty}</span>
         </div>
@@ -1141,7 +1212,13 @@ function buildCartMsg() {
     ``,
     `I want to place an order for the following items:`,
     ``,
-    ...cart.map(i => `• ${i.product}${i.size ? ` (Size: ${i.size})` : ""} x${i.qty}  —  ${i.price} each  =  Rs.${i.priceNum * i.qty}`),
+    ...cart.map(i => {
+      const bits = [];
+      if (i.size) bits.push(`Size: ${i.size}`);
+      if (i.sides && i.sides.length) bits.push(`Print Side: ${i.sides.join(", ")}`);
+      const suffix = bits.length ? ` (${bits.join(" | ")})` : "";
+      return `• ${i.product}${suffix} x${i.qty}  —  ${i.price} each  =  Rs.${i.priceNum * i.qty}`;
+    }),
     ``,
     `Grand Total: Rs.${total}`,
     ``,
@@ -1172,7 +1249,7 @@ function cartOrderEmail() {
    DELIVERY POPUP — naam/phone/address
    Saves to KV via API before redirecting
    ══════════════════════════════════════ */
-function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size) {
+function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size, sides) {
   const old = document.getElementById("pm-delivery-popup");
   if (old) old.remove();
 
@@ -1225,10 +1302,10 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
     let items = [];
     let total = 0;
     if (isCart) {
-      items = cart.map(i => ({ product: i.product, price: i.price, qty: i.qty, size: i.size || null }));
+      items = cart.map(i => ({ product: i.product, price: i.price, qty: i.qty, size: i.size || null, sides: i.sides || [] }));
       total = cart.reduce((s, i) => s + i.priceNum * i.qty, 0);
     } else if (product) {
-      items = [{ product, price, qty: 1, size: size || null }];
+      items = [{ product, price, qty: 1, size: size || null, sides: sides || [] }];
       total = parseInt((price || "0").replace(/[^0-9]/g, "")) || 0;
     }
 
