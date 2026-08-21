@@ -1,18 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
   <url>
     <loc>https://printmotive.in/</loc>
-    <lastmod>2026-08-20</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-08-21</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://printmotive.in/assets/logo.png</image:loc>
+      <image:title>PrintMotive Logo</image:title>
+      <image:caption>PrintMotive - Custom Printed T-Shirts, Mugs &amp; Phone Covers</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://printmotive.in/assets/hero-mug.jpg</image:loc>
+      <image:title>Custom Printed Mug</image:title>
+      <image:caption>Personalized Ceramic Coffee Mug Printing</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://printmotive.in/assets/hero-phone.jpg</image:loc>
+      <image:title>Custom Phone Cover</image:title>
+      <image:caption>Custom Mobile Back Cover Printing</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://printmotive.in/assets/hero-tshirt.jpg</image:loc>
+      <image:title>Custom Printed T-Shirt</image:title>
+      <image:caption>Custom Personalized T-Shirt Printing</image:caption>
+    </image:image>
   </url>
 
   <url>
     <loc>https://printmotive.in/reviews.html</loc>
-    <lastmod>2026-08-20</lastmod>
+    <lastmod>2026-08-21</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://printmotive.in/assets/logo.png</image:loc>
+      <image:title>PrintMotive Customer Reviews</image:title>
+      <image:caption>Real Customer Reviews and Ratings for PrintMotive</image:caption>
+    </image:image>
   </url>
 
 </urlset>

@@ -4,14 +4,77 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Custom Printed T-Shirts, Mugs & Phone Covers | PrintMotive </title>
-<meta name="description" content="PrintMotive brings your ideas to life — custom T-shirts, mugs, phone covers, hoodies & more. 100% personalized, no minimum order, fast pan-India delivery via WhatsApp.">
-  <link rel="icon" type="image/png" href="/favicon.png">
-  <meta property="og:image" content="https://assets.printmotive.in/file_00000000a5e0821185443a80f0759af6.png">
-<meta property="og:image:width" content="1730">
-<meta property="og:image:height" content="909">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/logo-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#ff4d2e">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PrintMotive">
+  <meta property="og:url" content="https://printmotive.in/">
   <meta property="og:title" content="Custom Printed T-Shirts, Mugs & Phone Covers | PrintMotive">
   <meta property="og:description" content="Turn your ideas into custom T-shirts, mugs, phone covers, hoodies & more. Free design help, fast pan-India delivery.">
-  <meta property="og:url" content="https://printmotive.in/">
+  <meta property="og:image" content="https://printmotive.in/assets/logo.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:image:alt" content="PrintMotive Official Logo">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Custom Printed T-Shirts, Mugs & Phone Covers | PrintMotive">
+  <meta name="twitter:description" content="Turn your ideas into custom T-shirts, mugs, phone covers, hoodies & more. Pan-India delivery.">
+  <meta name="twitter:image" content="https://printmotive.in/assets/logo.png">
+
+  <!-- Structured Data (JSON-LD) for Google Logo Crawling & SEO Indexing -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://printmotive.in/#organization",
+        "name": "PrintMotive",
+        "url": "https://printmotive.in/",
+        "logo": {
+          "@type": "ImageObject",
+          "@id": "https://printmotive.in/#logo",
+          "url": "https://printmotive.in/assets/logo.png",
+          "contentUrl": "https://printmotive.in/assets/logo.png",
+          "caption": "PrintMotive Logo",
+          "width": "512",
+          "height": "512"
+        },
+        "image": "https://printmotive.in/assets/logo.png",
+        "description": "Custom Printed T-Shirts, Mugs, Phone Covers, Hoodies & Gifts Studio in India.",
+        "sameAs": [
+          "https://instagram.com/printmotive.in",
+          "https://www.instagram.com/printmotive.in"
+        ],
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+91-6267159304",
+          "contactType": "customer service",
+          "areaServed": "IN",
+          "availableLanguage": ["en", "hi"]
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://printmotive.in/#website",
+        "url": "https://printmotive.in/",
+        "name": "PrintMotive",
+        "publisher": {
+          "@id": "https://printmotive.in/#organization"
+        }
+      }
+    ]
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css"/>
@@ -27,7 +90,7 @@
   <!-- NAVBAR -->
   <nav id="navbar">
     <a href="#" class="nav-logo">
-      <img src="https://i.ibb.co/ZpgV2Z4Z/IMG-20260410-WA0002.jpg" class="logo-icon" width="44" height="44">
+      <img src="assets/logo.png" alt="PrintMotive Logo" class="logo-icon" width="44" height="44" loading="eager">
       <span class="logo-text">Print<em>Motive</em></span>
     </a>
     <ul class="nav-links" id="navLinks">
@@ -84,15 +147,15 @@
     <div class="hero-right">
       <div class="hero-card-stack">
         <div class="h-card card-back">
-          <img src="https://m.media-amazon.com/images/I/61JxI4kbYsL.jpg" alt="Custom Mug"/>
+          <img src="assets/hero-mug.jpg" alt="Custom Mug" loading="lazy"/>
           <div class="hc-label">Custom Mug</div>
         </div>
         <div class="h-card card-mid">
-          <img src="https://m.media-amazon.com/images/I/71CspETzWIL._AC_UF1000,1000_QL80_FMwebp_.jpg" alt="Phone Cover"/>
+          <img src="assets/hero-phone.jpg" alt="Phone Cover" loading="lazy"/>
           <div class="hc-label">Phone Cover</div>
         </div>
         <div class="h-card card-front">
-          <img src="https://m.media-amazon.com/images/I/31sYpnB4ZuL._AC_UY1100_FMwebp_.jpg" alt="Custom T-Shirt"/>
+          <img src="assets/hero-tshirt.jpg" alt="Custom T-Shirt" loading="eager"/>
           <div class="hc-label">Custom Tee</div>
         </div>
         <div class="hero-badge">
@@ -164,7 +227,7 @@
     <!-- Category Filter — rendered dynamically by script.js from /api/categories -->
     <div class="cat-grid" id="catGrid">
       <button class="cat-card active" data-cat="all">
-        <div class="cat-img-wrap"><img src="https://assets.printmotive.in/products/file_00000000b1bc81fab2b710fe275cabf7.png" alt="All"/></div>
+        <div class="cat-img-wrap"><img src="assets/cat-all.png" alt="All"/></div>
         <div class="cat-name">All</div>
         <span class="cat-badge" id="badge-all">0</span>
       </button>
@@ -255,7 +318,7 @@
     <div class="footer-grid">
       <div class="footer-brand-col">
         <a href="#" class="footer-logo-wrap">
-          <img src="https://i.ibb.co/ZpgV2Z4Z/IMG-20260410-WA0002.jpg" class="logo-icon" width="44" height="44">
+          <img src="assets/logo.png" alt="PrintMotive Logo" class="logo-icon" width="44" height="44" loading="lazy">
           <span class="footer-brand-name">Print<em>Motive</em></span>
         </a>
         <p class="footer-tagline">India's custom print studio &mdash; turning your ideas into wearable, usable, giftable art.</p>

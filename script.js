@@ -49,8 +49,8 @@ function renderCategoryTabs() {
   const wrap = document.getElementById("catGrid");
   if (!wrap) return;
 
-  const allImg = "https://assets.printmotive.in/products/file_00000000b1bc81fab2b710fe275cabf7.png";
-  const placeholderImg = "https://via.placeholder.com/60?text=%20";
+  const allImg = "assets/cat-all.png";
+  const placeholderImg = "assets/placeholder.png";
 
   const tabsHtml = [`
     <button class="cat-card ${currentCategory === 'all' ? 'active' : ''}" data-cat="all" onclick="filterCategory('all')">
@@ -144,7 +144,7 @@ function renderProducts(products) {
           src="${escapeHtml(m.url)}"
           alt="${escapeHtml(p.name)}"
           loading="lazy"
-          onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'"
+          onerror="this.src='assets/placeholder-300.png'"
           onclick="event.stopPropagation(); openMediaLightbox('${escapeHtml(p.id)}', ${index})"
         />
       `;

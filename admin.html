@@ -4,6 +4,11 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin — PrintMotive</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet"/>
   <style>
@@ -481,7 +486,7 @@
 <div class="login-screen" id="loginScreen">
   <div class="login-box">
     <div class="login-logo">
-      <img src="https://i.ibb.co/ZpgV2Z4Z/IMG-20260410-WA0002.jpg" width="40" height="40" style="border-radius:8px;">
+      <img src="assets/logo.png" alt="PrintMotive Logo" width="40" height="40" style="border-radius:8px;">
       <div>
         <div class="login-logo-text">Print<em>Motive</em></div>
       </div>
@@ -1145,7 +1150,7 @@ function renderCategoriesList() {
     return `
       <div class="cat-list-item-wrap" data-cat-id="${escHtml(c.id)}">
         <div class="cat-list-item">
-          <img class="cat-list-img" src="${c.image ? escHtml(c.image) : 'https://via.placeholder.com/44'}" onerror="this.src='https://via.placeholder.com/44'">
+          <img class="cat-list-img" src="${c.image ? escHtml(c.image) : 'assets/placeholder-44.png'}" onerror="this.src='assets/placeholder-44.png'">
           <div class="cat-list-info">
             <div class="cat-list-name">${escHtml(c.label)}</div>
             <div class="cat-list-count">${count} product${count === 1 ? '' : 's'}</div>
@@ -1657,7 +1662,7 @@ async function loadProducts() {
         : (p.imageUrl ? [{ url: p.imageUrl, type: 'image' }] : []);
       return `
       <tr data-id="${p.id}">
-        <td><img src="${p.imageUrl || 'https://via.placeholder.com/44'}" class="prod-thumb" onerror="this.src='https://via.placeholder.com/44'" onclick='openAdminLightbox(${JSON.stringify(media).replace(/'/g, "&#39;")}, 0)'></td>
+        <td><img src="${p.imageUrl || 'assets/placeholder-44.png'}" class="prod-thumb" onerror="this.src='assets/placeholder-44.png'" onclick='openAdminLightbox(${JSON.stringify(media).replace(/'/g, "&#39;")}, 0)'></td>
         <td>${escHtml(p.name)}</td>
         <td><span class="badge-cat">${p.category}</span></td>
         <td style="font-weight:600;">${escHtml(p.price)}</td>
