@@ -527,6 +527,93 @@ section { padding: 5.5rem 2.5rem; }
 
 
 /* ============================================================
+   ABOUT US
+   ============================================================ */
+#about { background: var(--bg2); }
+
+.about-intro {
+  max-width: 760px;
+  font-size: 1.02rem; line-height: 1.85; color: var(--ink2);
+  margin-bottom: 2.5rem;
+}
+
+.about-founder {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 3rem; padding: 1.2rem 1.4rem;
+  background: var(--bg3); border-radius: 12px;
+  max-width: 460px;
+}
+.founder-avatar {
+  width: 56px; height: 56px; flex-shrink: 0; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.15rem;
+}
+.founder-name {
+  font-family: 'Playfair Display', serif; font-weight: 700;
+  font-size: 1.1rem; color: var(--ink);
+}
+.founder-alias { color: var(--muted); font-weight: 400; font-size: 0.95rem; }
+.founder-role { font-size: 0.8rem; color: var(--accent); font-weight: 600; letter-spacing: 0.3px; }
+
+.about-block { margin-bottom: 2.8rem; }
+.about-block-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem; font-weight: 700; color: var(--ink);
+  margin-bottom: 1rem;
+}
+.about-block-text {
+  max-width: 760px; font-size: 0.96rem; line-height: 1.85; color: var(--ink2);
+}
+
+.offer-grid { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+.offer-chip {
+  background: var(--bg3); border: 1.5px solid var(--border);
+  padding: 0.55rem 1.1rem; border-radius: 30px;
+  font-size: 0.82rem; font-weight: 600; color: var(--ink);
+}
+
+.why-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 1.3rem;
+}
+.why-card {
+  background: var(--bg2); border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 1.4rem 1.2rem;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.why-card:hover { transform: translateY(-6px); box-shadow: var(--shadow); }
+.why-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,77,46,0.1);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 0.9rem;
+}
+.why-title {
+  font-family: 'Playfair Display', serif; font-weight: 700;
+  font-size: 1rem; color: var(--ink); margin-bottom: 0.4rem;
+}
+.why-desc { font-size: 0.8rem; line-height: 1.6; color: var(--muted); }
+
+.mv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.mv-card {
+  background: var(--ink); border-radius: 14px; padding: 1.8rem;
+}
+.mv-label {
+  font-family: 'Playfair Display', serif; font-weight: 700; font-style: italic;
+  font-size: 1.1rem; color: var(--accent2); margin-bottom: 0.7rem;
+}
+.mv-text { font-size: 0.88rem; line-height: 1.75; color: rgba(255,255,255,0.75); }
+
+@media (max-width: 900px) {
+  .why-grid { grid-template-columns: 1fr 1fr; }
+  .mv-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .why-grid { grid-template-columns: 1fr; }
+  .about-founder { flex-direction: column; text-align: center; }
+}
+
+/* ============================================================
    TESTIMONIALS
    ============================================================ */
 #testimonials { background: var(--bg); }
