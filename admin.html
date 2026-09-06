@@ -601,6 +601,11 @@
         Categories
         <span class="nav-count" id="nc-categories">0</span>
       </button>
+      <button class="nav-item" onclick="switchSection('banners')" id="nav-banners">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        Offer Banners
+        <span class="nav-count" id="nc-banners">0</span>
+      </button>
     </nav>
 
     <div class="sidebar-footer">
@@ -815,6 +820,39 @@
       </div>
     </div>
 
+    <div class="admin-section" id="section-banners">
+      <div class="section-header">
+        <div class="section-title">Offer Banners</div>
+        <button class="btn-secondary-adm" onclick="loadBanners()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.08-4.96"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <!-- Add New Banner -->
+      <div class="cat-add-block">
+        <div class="section-title" style="margin-bottom:12px;">Add New Banner</div>
+        <div class="img-upload-row">
+          <input type="text" class="adm-input" id="newBannerUrl" placeholder="Paste banner image URL here"/>
+          <button type="button" class="img-upload-btn" onclick="addBannerFromUrl()">Add URL</button>
+          <label class="img-upload-btn">
+            Upload
+            <input type="file" id="newBannerFile" accept="image/*" multiple style="display:none" onchange="handleBannerUpload(this)"/>
+          </label>
+        </div>
+        <div class="prog-bar-wrap" id="bannerUploadProg" style="display:none"><div class="prog-bar" id="bannerUploadBar"></div></div>
+        <p class="cat-form-hint">These images slide automatically on the homepage, right below the hero section. Recommended size: wide banners (e.g. 1600×500px). If no banners are added, the section stays hidden on the site.</p>
+      </div>
+
+      <!-- Existing Banners -->
+      <div class="cat-add-block" style="margin-top:20px;">
+        <div class="section-title" style="margin-bottom:12px;">Existing Banners</div>
+        <div id="bannersContainer" class="media-thumb-grid">
+          <div class="empty-state"><div class="es-icon">🖼️</div><p>Loading banners...</p></div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -826,6 +864,13 @@
     <div class="form-row">
       <div class="form-group"><label>Product Name *</label><input type="text" class="adm-input" id="editName" placeholder="Product name"/></div>
       <div class="form-group"><label>Price *</label><input type="text" class="adm-input" id="editPrice" placeholder="Rs.299"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Discounted Price (optional)</label>
+        <input type="text" class="adm-input" id="editDiscountedPrice" placeholder="Rs.249 — leave empty for no discount"/>
+      </div>
+      <div class="form-group"></div>
     </div>
     <div class="form-row single">
       <div class="form-group"><label>Description</label><textarea class="adm-input" id="editDesc" placeholder="Product description..." rows="3"></textarea></div>
@@ -1228,6 +1273,7 @@ function initAdmin() {
   loadProducts();
   loadOrders();
   loadReviews();
+  loadBanners();
   renderSizeChips('bulk-sizes', 'bulk');
   renderSideChips('bulk-sides', 'bulk');
   cddRefresh(); // wrap editCategory / editStock and any other static selects
@@ -1247,7 +1293,7 @@ function switchSection(name) {
   document.getElementById(`section-${name}`).classList.add('active');
   document.getElementById(`nav-${name}`).classList.add('active');
   document.getElementById('sectionTitle').textContent =
-    { products: 'Products', orders: 'Order History', reviews: 'Reviews', categories: 'Categories' }[name];
+    { products: 'Products', orders: 'Order History', reviews: 'Reviews', categories: 'Categories', banners: 'Offer Banners' }[name];
   closeSidebar();
 }
 
@@ -1446,6 +1492,113 @@ async function deleteCategoryUI(id, label, count) {
 }
 
 /* ══════════════════════════════
+   OFFER BANNERS
+══════════════════════════════ */
+let allBanners = [];
+
+async function loadBanners() {
+  const container = document.getElementById('bannersContainer');
+  try {
+    allBanners = await apiFetch('/api/banners', 'GET', null, false);
+    if (!Array.isArray(allBanners)) allBanners = [];
+    document.getElementById('nc-banners').textContent = allBanners.length;
+    renderBannersList();
+  } catch {
+    container.innerHTML = '<div class="empty-state"><div class="es-icon">🖼️</div><p>Could not load banners.</p></div>';
+  }
+}
+
+function renderBannersList() {
+  const container = document.getElementById('bannersContainer');
+  if (!allBanners.length) {
+    container.innerHTML = '<div class="empty-state"><div class="es-icon">🖼️</div><p>No offer banners yet. Add one above — the homepage slider stays hidden until then.</p></div>';
+    return;
+  }
+  container.innerHTML = allBanners.map(b => `
+    <div class="media-thumb-item">
+      <div class="media-thumb-preview-wrap"><img src="${escHtml(b.url)}" alt="Offer banner"/></div>
+      <div class="media-thumb-url">${escHtml(b.url)}</div>
+      <button type="button" class="media-thumb-remove" onclick="deleteBannerUI('${escHtml(b.id)}')" title="Delete banner">✕</button>
+    </div>
+  `).join('');
+}
+
+async function addBannerFromUrl() {
+  const input = document.getElementById('newBannerUrl');
+  const url = input.value.trim();
+  if (!url) { showAdmToast('Please paste an image URL first', 'error'); return; }
+
+  try {
+    const res = await apiFetch('/api/admin/banners', 'POST', { url, r2Key: guessR2Key(url) });
+    if (res.success) {
+      input.value = '';
+      showAdmToast('✓ Banner added', 'success');
+      await loadBanners();
+    } else {
+      showAdmToast(res.error || 'Failed to add banner', 'error');
+    }
+  } catch {
+    showAdmToast('Network error', 'error');
+  }
+}
+
+async function handleBannerUpload(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+
+  const prog = document.getElementById('bannerUploadProg');
+  const bar  = document.getElementById('bannerUploadBar');
+  prog.style.display = 'block';
+
+  let addedCount = 0;
+  for (let n = 0; n < files.length; n++) {
+    const file = files[n];
+    if (file.size > 40 * 1024 * 1024) {
+      showAdmToast(`${file.name} is too large (max 40MB)`, 'error');
+      continue;
+    }
+    if (!file.type.startsWith('image/')) {
+      showAdmToast(`${file.name} is not an image`, 'error');
+      continue;
+    }
+    try {
+      const url = await uploadFileXHR(
+        `${API}/api/admin/upload`,
+        file,
+        'banners',
+        token,
+        pct => { bar.style.width = (((n + pct / 100) / files.length) * 100) + '%'; }
+      );
+      const res = await apiFetch('/api/admin/banners', 'POST', { url, r2Key: guessR2Key(url) });
+      if (res.success) addedCount++;
+    } catch (e) {
+      showAdmToast('Upload failed: ' + e.message, 'error');
+    }
+  }
+
+  prog.style.display = 'none';
+  input.value = '';
+  if (addedCount) showAdmToast(`✓ ${addedCount} banner(s) added`, 'success');
+  await loadBanners();
+}
+
+async function deleteBannerUI(id) {
+  showDelModal('Delete this banner?', 'This cannot be undone.', async () => {
+    try {
+      const res = await apiFetch(`/api/admin/banners/${id}`, 'DELETE');
+      if (res.success) {
+        showAdmToast('✓ Banner deleted', 'success');
+        await loadBanners();
+      } else {
+        showAdmToast(res.error || 'Delete failed', 'error');
+      }
+    } catch {
+      showAdmToast('Failed to delete banner', 'error');
+    }
+  });
+}
+
+/* ══════════════════════════════
    PRODUCTS
 ══════════════════════════════ */
 let productForms = [];
@@ -1506,6 +1659,12 @@ function renderProductForms() {
         <div class="form-group"><label>Price *</label>
           <input type="text" class="adm-input" id="pf-price-${i}" placeholder="Rs.249"/>
         </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Discounted Price (optional)</label>
+          <input type="text" class="adm-input" id="pf-discprice-${i}" placeholder="Rs.199 — leave empty for no discount"/>
+        </div>
+        <div class="form-group"></div>
       </div>
       <div class="form-row single">
         <div class="form-group"><label>Description</label>
@@ -1838,6 +1997,7 @@ async function saveAllProducts() {
     return {
       name:        document.getElementById(`pf-name-${i}`)?.value.trim() || '',
       price:       document.getElementById(`pf-price-${i}`)?.value.trim() || '',
+      discountedPrice: document.getElementById(`pf-discprice-${i}`)?.value.trim() || '',
       description: document.getElementById(`pf-desc-${i}`)?.value.trim() || '',
       category:    document.getElementById(`pf-cat-${i}`)?.value || 'accessories',
       badge:       document.getElementById(`pf-badge-${i}`)?.value.trim() || '',
@@ -2004,6 +2164,7 @@ async function openEditModal(id) {
   document.getElementById('editProductId').value  = p.id;
   document.getElementById('editName').value        = p.name;
   document.getElementById('editPrice').value       = p.price;
+  document.getElementById('editDiscountedPrice').value = p.discountedPrice || '';
   document.getElementById('editDesc').value        = p.description || '';
   document.getElementById('editCategory').value    = p.category;
   document.getElementById('editBadge').value       = p.badge || '';
@@ -2068,6 +2229,7 @@ async function saveEditProduct() {
     const res = await apiFetch(`/api/admin/products/${id}`, 'PUT', {
       name:        document.getElementById('editName').value.trim(),
       price:       document.getElementById('editPrice').value.trim(),
+      discountedPrice: document.getElementById('editDiscountedPrice').value.trim(),
       description: document.getElementById('editDesc').value.trim(),
       category:    document.getElementById('editCategory').value,
       badge:       document.getElementById('editBadge').value.trim(),
