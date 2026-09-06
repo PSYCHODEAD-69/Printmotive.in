@@ -107,9 +107,9 @@ function renderProducts(products) {
   grid.innerHTML = filtered.map(p => `
     <div class="product-card fade-up ${p.inStock === false ? "pc-oos" : ""}" data-cat="${p.category}" data-id="${p.id}" onclick="openProductDetail('${escapeHtml(p.id)}', event)">
       ${p.badge ? `<div class="pc-badge">${p.badge}</div>` : ""}
-      ${renderDiscountBadgeHtml(p)}
       ${p.inStock === false ? `<div class="pc-badge-oos">Out of Stock</div>` : ""}
       <div class="pc-img-wrap">
+       ${renderDiscountBadgeHtml(p)}
        <div class="pc-media-carousel" data-product-id="${escapeHtml(p.id)}" data-media='${escapeHtml(JSON.stringify(
          Array.isArray(p.media) && p.media.length
            ? p.media
@@ -260,15 +260,14 @@ function renderPriceBlock(p) {
 }
 
 /* Renders the auto "%off" badge markup, or empty string if no discount.
-   Placement corner depends on whether admin already set a custom badge
-   (New / Trending / Best Selling) — that one owns the top-left corner,
-   so the %off badge falls back to top-right in that case. */
+   Always placed bottom-left so it never collides with the custom
+   New/Trending/Best-Seller badge (top-left) or the Out-of-Stock badge
+   (top-right) — those stay put, this one lives in its own corner. */
 function renderDiscountBadgeHtml(p) {
   if (!hasDiscount(p)) return "";
   const pct = discountPercent(p);
   if (pct <= 0) return "";
-  const cornerClass = p.badge ? "pc-badge-off pc-badge-off-right" : "pc-badge-off pc-badge-off-left";
-  return `<div class="${cornerClass}">${pct}% OFF</div>`;
+  return `<div class="pc-badge-off pc-badge-off-bottomleft">${pct}% OFF</div>`;
 }
 
 /* The price actually charged — discountedPrice if set, else the normal price.
@@ -1407,14 +1406,30 @@ async function saveOrderToAPI(orderData) {
 
 /* ══════════════════════════════════════
    OFFER BANNER SLIDER (Amazon/Flipkart style)
-   Loads banner images uploaded via the admin panel. If none exist, the
-   whole section is removed from layout (no empty gap). Auto-slides every
-   2.5s and also supports manual prev/next — clicking a banner does nothing.
+   Loads banner images uploaded via the admin panel. Each banner can have
+   a separate desktop image and mobile image — the frontend picks the
+   right one for the current screen width. If no banners exist at all,
+   the whole section is removed from layout (no empty gap). Auto-slides
+   every 2.5s and also supports manual prev/next. Clicking a banner opens
+   a zoomed lightbox (like product images) — no redirect anywhere.
    ══════════════════════════════════════ */
 let offerBanners        = [];
 let offerBannerIndex    = 0;
 let offerBannerTimer    = null;
 const OFFER_SLIDE_DELAY = 2500; // ms
+const OFFER_MOBILE_BREAKPOINT = 760; // px — matches the site's mobile CSS breakpoint
+
+function isOfferMobileView() {
+  return window.innerWidth <= OFFER_MOBILE_BREAKPOINT;
+}
+
+/* Picks the right image for the current screen size, falling back to
+   whichever image exists if only one was uploaded for this banner. */
+function offerBannerImageFor(b) {
+  const useMobile = isOfferMobileView();
+  if (useMobile) return b.mobileUrl || b.desktopUrl || "";
+  return b.desktopUrl || b.mobileUrl || "";
+}
 
 async function loadOfferBanners() {
   const section = document.getElementById("offerBanner");
@@ -1461,7 +1476,8 @@ function renderOfferBanners() {
 
   track.innerHTML = offerBanners.map((b, i) => `
     <div class="offer-banner-slide ${i === offerBannerIndex ? "active" : ""}">
-      <img src="${escapeHtml(b.url)}" alt="Offer" loading="${i === 0 ? "eager" : "lazy"}"/>
+      <img src="${escapeHtml(offerBannerImageFor(b))}" alt="Offer" loading="${i === 0 ? "eager" : "lazy"}"
+           onclick="openOfferBannerLightbox(${i})"/>
     </div>
   `).join("");
 
@@ -1506,6 +1522,38 @@ function stopOfferAutoSlide() {
 function restartOfferAutoSlide() {
   stopOfferAutoSlide();
   startOfferAutoSlide();
+}
+
+// Re-render on resize so crossing the mobile/desktop breakpoint swaps
+// images immediately, without needing a page reload. Debounced.
+let offerBannerResizeTimer = null;
+window.addEventListener("resize", () => {
+  if (!offerBanners.length) return;
+  clearTimeout(offerBannerResizeTimer);
+  offerBannerResizeTimer = setTimeout(renderOfferBanners, 200);
+});
+
+/* ══════════════════════════════════════
+   OFFER BANNER LIGHTBOX — zoomed view on click (no redirect)
+   Reuses the same full-size lightbox overlay as product images.
+   ══════════════════════════════════════ */
+function openOfferBannerLightbox(index) {
+  const b = offerBanners[index];
+  if (!b) return;
+
+  const url = offerBannerImageFor(b);
+  if (!url) return;
+
+  const content = document.getElementById("mediaLightboxContent");
+  const nav     = document.getElementById("mediaLightboxNav");
+  if (!content) return;
+
+  content.innerHTML = `<img src="${escapeHtml(url)}" alt="Offer"/>`;
+  if (nav) nav.style.display = "none"; // single image — no prev/next needed
+
+  const overlay = document.getElementById("mediaLightboxOverlay");
+  overlay.classList.add("open");
+  document.body.style.overflow = "hidden";
 }
 
 /* ══════════════════════════════════════
