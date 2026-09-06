@@ -132,6 +132,16 @@
     </div>
   </section>
 
+  <!-- OFFER BANNER SLIDER — hidden entirely by JS when no banners exist -->
+  <section id="offerBanner" class="offer-banner-section" style="display:none;">
+    <div class="offer-banner-slider" id="offerBannerSlider">
+      <div class="offer-banner-track" id="offerBannerTrack"></div>
+      <button class="offer-banner-nav offer-banner-prev" type="button" onclick="changeOfferBanner(-1)" aria-label="Previous offer">&#10094;</button>
+      <button class="offer-banner-nav offer-banner-next" type="button" onclick="changeOfferBanner(1)" aria-label="Next offer">&#10095;</button>
+      <div class="offer-banner-dots" id="offerBannerDots"></div>
+    </div>
+  </section>
+
   <!-- MARQUEE -->
   <div class="marquee-wrap">
     <div class="marquee-track" id="marquee">
