@@ -107,6 +107,7 @@ function renderProducts(products) {
   grid.innerHTML = filtered.map(p => `
     <div class="product-card fade-up ${p.inStock === false ? "pc-oos" : ""}" data-cat="${p.category}" data-id="${p.id}" onclick="openProductDetail('${escapeHtml(p.id)}', event)">
       ${p.badge ? `<div class="pc-badge">${p.badge}</div>` : ""}
+      ${renderDiscountBadgeHtml(p)}
       ${p.inStock === false ? `<div class="pc-badge-oos">Out of Stock</div>` : ""}
       <div class="pc-img-wrap">
        <div class="pc-media-carousel" data-product-id="${escapeHtml(p.id)}" data-media='${escapeHtml(JSON.stringify(
@@ -166,13 +167,12 @@ function renderProducts(products) {
         <div class="pc-name">${escapeHtml(p.name)}</div>
         ${p.description ? `<div class="pc-desc">${escapeHtml(p.description)}</div>` : ""}
         <div class="pc-price-row">
-          <span class="pc-price">${escapeHtml(p.price)}</span>
-          <span class="pc-price-tag">Starting price</span>
+          ${renderPriceBlock(p)}
         </div>
         <div class="pc-btns">
           <button class="pc-btn-cart"
             data-product="${escapeHtml(p.name)}"
-            data-price="${escapeHtml(p.price)}"
+            data-price="${escapeHtml(effectivePrice(p))}"
             data-desc="${escapeHtml(p.description || p.name)}"
             data-id="${escapeHtml(p.id)}"
             ${p.inStock === false ? "disabled" : ""}
@@ -182,7 +182,7 @@ function renderProducts(products) {
           </button>
           <button class="pc-btn-order"
             data-product="${escapeHtml(p.name)}"
-            data-price="${escapeHtml(p.price)}"
+            data-price="${escapeHtml(effectivePrice(p))}"
             data-desc="${escapeHtml(p.description || p.name)}"
             data-id="${escapeHtml(p.id)}"
             ${p.inStock === false ? "disabled" : ""}
@@ -224,6 +224,57 @@ function updateCategoryBadges(products) {
 function categoryLabel(cat) {
   const found = allCategories.find(c => c.id === cat);
   return found ? found.label : cat;
+}
+
+/* ══════════════════════════════════════
+   PRICE / DISCOUNT HELPERS
+   A product has:
+   - price            : the actual price (always shown)
+   - discountedPrice   : optional sale price (admin can leave blank)
+   If discountedPrice is set, `price` is shown struck-through next to
+   discountedPrice, plus an auto-calculated "% off" badge. If left blank,
+   only `price` is shown (no strike, no badge) — original site behaviour.
+   ══════════════════════════════════════ */
+function hasDiscount(p) {
+  const dNum = p.discountedPriceNum ?? (parseInt(String(p.discountedPrice || "0").replace(/[^0-9]/g, "")) || 0);
+  const pNum = p.priceNum ?? (parseInt(String(p.price || "0").replace(/[^0-9]/g, "")) || 0);
+  return !!(p.discountedPrice && dNum > 0 && dNum < pNum);
+}
+
+function discountPercent(p) {
+  const dNum = p.discountedPriceNum ?? (parseInt(String(p.discountedPrice || "0").replace(/[^0-9]/g, "")) || 0);
+  const pNum = p.priceNum ?? (parseInt(String(p.price || "0").replace(/[^0-9]/g, "")) || 0);
+  if (!pNum) return 0;
+  return Math.round(((pNum - dNum) / pNum) * 100);
+}
+
+/* Renders the price block markup for a product card / detail view */
+function renderPriceBlock(p) {
+  if (hasDiscount(p)) {
+    return `
+      <span class="pc-price-strike">${escapeHtml(p.price)}</span>
+      <span class="pc-price">${escapeHtml(p.discountedPrice)}</span>
+    `;
+  }
+  return `<span class="pc-price">${escapeHtml(p.price)}</span>`;
+}
+
+/* Renders the auto "%off" badge markup, or empty string if no discount.
+   Placement corner depends on whether admin already set a custom badge
+   (New / Trending / Best Selling) — that one owns the top-left corner,
+   so the %off badge falls back to top-right in that case. */
+function renderDiscountBadgeHtml(p) {
+  if (!hasDiscount(p)) return "";
+  const pct = discountPercent(p);
+  if (pct <= 0) return "";
+  const cornerClass = p.badge ? "pc-badge-off pc-badge-off-right" : "pc-badge-off pc-badge-off-left";
+  return `<div class="${cornerClass}">${pct}% OFF</div>`;
+}
+
+/* The price actually charged — discountedPrice if set, else the normal price.
+   Used for cart/order totals and the data-price attribute on buttons. */
+function effectivePrice(p) {
+  return hasDiscount(p) ? p.discountedPrice : p.price;
 }
 
 /* ══════════════════════════════════════
@@ -699,7 +750,13 @@ function openProductDetail(productId, evt) {
       <div class="pm-dtl-info">
         <div class="pm-dtl-cat">${escapeHtml(categoryLabel(p.category))}</div>
         <div class="pm-dtl-name">${escapeHtml(p.name)}</div>
-        <div class="pm-dtl-price">${escapeHtml(p.price)} <span class="pm-dtl-price-tag">Starting price</span></div>
+        <div class="pm-dtl-price">
+          ${hasDiscount(p) ? `
+            <span class="pc-price-strike">${escapeHtml(p.price)}</span>
+            <span class="pc-price">${escapeHtml(p.discountedPrice)}</span>
+            <span class="pm-dtl-off-tag">${discountPercent(p)}% OFF</span>
+          ` : `<span class="pc-price">${escapeHtml(p.price)}</span>`}
+        </div>
         ${p.inStock === false ? `<div class="pm-dtl-oos-badge">Out of Stock</div>` : ""}
         ${p.description ? `<p class="pm-dtl-desc">${escapeHtml(p.description)}</p>` : ""}
 
@@ -725,12 +782,12 @@ function openProductDetail(productId, evt) {
 
         <div class="pm-dtl-btns">
           <button class="pc-btn-cart pm-dtl-btn-cart" id="pmDtlAddCart" ${(hasSizes || hasSides || p.inStock === false) ? "disabled" : ""}
-            data-product="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-desc="${escapeHtml(p.description || p.name)}">
+            data-product="${escapeHtml(p.name)}" data-price="${escapeHtml(effectivePrice(p))}" data-desc="${escapeHtml(p.description || p.name)}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             ${p.inStock === false ? "Out of Stock" : "Add to Cart"}
           </button>
           <button class="pc-btn-order pm-dtl-btn-order" id="pmDtlOrderNow" ${(hasSizes || hasSides || p.inStock === false) ? "disabled" : ""}
-            data-product="${escapeHtml(p.name)}" data-price="${escapeHtml(p.price)}" data-desc="${escapeHtml(p.description || p.name)}">
+            data-product="${escapeHtml(p.name)}" data-price="${escapeHtml(effectivePrice(p))}" data-desc="${escapeHtml(p.description || p.name)}">
             Order Now
           </button>
         </div>
@@ -1349,6 +1406,109 @@ async function saveOrderToAPI(orderData) {
 }
 
 /* ══════════════════════════════════════
+   OFFER BANNER SLIDER (Amazon/Flipkart style)
+   Loads banner images uploaded via the admin panel. If none exist, the
+   whole section is removed from layout (no empty gap). Auto-slides every
+   2.5s and also supports manual prev/next — clicking a banner does nothing.
+   ══════════════════════════════════════ */
+let offerBanners        = [];
+let offerBannerIndex    = 0;
+let offerBannerTimer    = null;
+const OFFER_SLIDE_DELAY = 2500; // ms
+
+async function loadOfferBanners() {
+  const section = document.getElementById("offerBanner");
+  if (!section) return;
+
+  try {
+    const res     = await fetch(`${PM_API}/api/banners`);
+    const banners = await res.json();
+    offerBanners  = Array.isArray(banners) ? banners : [];
+
+    if (!offerBanners.length) {
+      section.style.display = "none";
+      section.innerHTML = ""; // fully empty — no reserved space
+      return;
+    }
+
+    // Section was possibly emptied by a prior no-banner state; restore markup
+    if (!document.getElementById("offerBannerTrack")) {
+      section.innerHTML = `
+        <div class="offer-banner-slider" id="offerBannerSlider">
+          <div class="offer-banner-track" id="offerBannerTrack"></div>
+          <button class="offer-banner-nav offer-banner-prev" type="button" onclick="changeOfferBanner(-1)" aria-label="Previous offer">&#10094;</button>
+          <button class="offer-banner-nav offer-banner-next" type="button" onclick="changeOfferBanner(1)" aria-label="Next offer">&#10095;</button>
+          <div class="offer-banner-dots" id="offerBannerDots"></div>
+        </div>
+      `;
+    }
+
+    section.style.display = "block";
+    offerBannerIndex = 0;
+    renderOfferBanners();
+    startOfferAutoSlide();
+  } catch (err) {
+    console.error("Failed to load offer banners:", err);
+    section.style.display = "none";
+    section.innerHTML = "";
+  }
+}
+
+function renderOfferBanners() {
+  const track = document.getElementById("offerBannerTrack");
+  const dots  = document.getElementById("offerBannerDots");
+  if (!track) return;
+
+  track.innerHTML = offerBanners.map((b, i) => `
+    <div class="offer-banner-slide ${i === offerBannerIndex ? "active" : ""}">
+      <img src="${escapeHtml(b.url)}" alt="Offer" loading="${i === 0 ? "eager" : "lazy"}"/>
+    </div>
+  `).join("");
+
+  if (dots) {
+    dots.innerHTML = offerBanners.length > 1
+      ? offerBanners.map((_, i) => `<span class="offer-banner-dot ${i === offerBannerIndex ? "active" : ""}" onclick="goToOfferBanner(${i})"></span>`).join("")
+      : "";
+  }
+
+  // Hide nav arrows entirely when there's nothing to navigate between
+  const slider = document.getElementById("offerBannerSlider");
+  if (slider) slider.classList.toggle("offer-single", offerBanners.length <= 1);
+}
+
+function changeOfferBanner(direction) {
+  if (!offerBanners.length) return;
+  offerBannerIndex = (offerBannerIndex + direction + offerBanners.length) % offerBanners.length;
+  renderOfferBanners();
+  restartOfferAutoSlide(); // manual interaction resets the auto-slide timer
+}
+
+function goToOfferBanner(index) {
+  if (!offerBanners.length) return;
+  offerBannerIndex = index;
+  renderOfferBanners();
+  restartOfferAutoSlide();
+}
+
+function startOfferAutoSlide() {
+  stopOfferAutoSlide();
+  if (offerBanners.length <= 1) return;
+  offerBannerTimer = setInterval(() => {
+    offerBannerIndex = (offerBannerIndex + 1) % offerBanners.length;
+    renderOfferBanners();
+  }, OFFER_SLIDE_DELAY);
+}
+
+function stopOfferAutoSlide() {
+  if (offerBannerTimer) { clearInterval(offerBannerTimer); offerBannerTimer = null; }
+}
+
+function restartOfferAutoSlide() {
+  stopOfferAutoSlide();
+  startOfferAutoSlide();
+}
+
+/* ══════════════════════════════════════
    HELPER — HTML escape
    ══════════════════════════════════════ */
 function escapeHtml(s) {
@@ -1376,6 +1536,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Dynamic data from API
   loadProducts();
   loadFeaturedReviews();
+  loadOfferBanners();
 
   console.log("%cPrintMotive loaded!", "color:#ff4d2e;font-weight:bold;font-size:14px");
 });
