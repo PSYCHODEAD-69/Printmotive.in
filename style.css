@@ -1527,6 +1527,27 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
   font-size: 0.7rem; color: var(--muted);
 }
 
+/* Strike-through original price shown next to the discounted price */
+.pc-price-strike {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem; font-weight: 600;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+/* Auto-calculated "%off" badge. Corner depends on whether the product
+   already has a custom badge (New/Trending/Best Selling) in top-left —
+   if so this falls to top-right instead, so they never overlap. */
+.pc-badge-off {
+  position: absolute; z-index: 2;
+  background: #16a34a; color: white;
+  font-size: 0.68rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+.pc-badge-off-left  { top: 12px; left: 12px; }
+.pc-badge-off-right { top: 12px; right: 12px; }
+
 .pc-btns {
   display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
 }
@@ -1564,6 +1585,96 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
   font-size: 0.68rem; font-weight: 700;
   padding: 3px 10px; border-radius: 20px;
   letter-spacing: 0.5px;
+}
+
+/* ============================================================
+   OFFER BANNER SLIDER (Amazon/Flipkart style)
+   Section is display:none + emptied by JS when there are no banners,
+   so it takes up zero space rather than showing a blank gap.
+   ============================================================ */
+.offer-banner-section {
+  padding: 0 2.5rem;
+  margin: 2.2rem 0;
+}
+.offer-banner-slider {
+  position: relative;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  aspect-ratio: 16 / 5;
+}
+.offer-banner-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.offer-banner-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.offer-banner-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+.offer-banner-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.offer-banner-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-size: 0.95rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  opacity: 0;
+}
+.offer-banner-slider:hover .offer-banner-nav { opacity: 1; }
+.offer-banner-nav:hover { background: rgba(0,0,0,0.55); }
+.offer-banner-prev { left: 14px; }
+.offer-banner-next { right: 14px; }
+.offer-banner-slider.offer-single .offer-banner-nav,
+.offer-banner-slider.offer-single .offer-banner-dots {
+  display: none;
+}
+.offer-banner-dots {
+  position: absolute;
+  bottom: 12px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex; gap: 6px;
+}
+.offer-banner-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(255,255,255,0.55);
+  cursor: pointer;
+  transition: background 0.2s, width 0.2s;
+}
+.offer-banner-dot.active {
+  background: #fff;
+  width: 20px;
+  border-radius: 4px;
+}
+@media (max-width: 760px) {
+  .offer-banner-section { padding: 0 1.2rem; margin: 1.4rem 0; }
+  .offer-banner-slider { aspect-ratio: 16 / 8; border-radius: 12px; }
+  .offer-banner-nav { width: 32px; height: 32px; opacity: 1; } /* always visible on touch */
 }
 
 /* ── TESTIMONIALS — updated cards with API data ── */
@@ -2016,11 +2127,18 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
   font-family: 'Space Mono', monospace;
   font-size: 1.15rem; font-weight: 700; color: #ff4d2e;
   margin-bottom: 1rem;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
 }
+.pm-dtl-price .pc-price { color: #ff4d2e; font-size: 1.15rem; }
+.pm-dtl-price .pc-price-strike { font-size: 0.95rem; }
 .pm-dtl-price-tag {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.7rem; font-weight: 500; color: #9a9088;
   text-transform: none;
+}
+.pm-dtl-off-tag {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem; font-weight: 700; color: #16a34a;
 }
 .pm-dtl-oos-badge {
   display: inline-block;
