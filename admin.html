@@ -832,22 +832,49 @@
       <!-- Add New Banner -->
       <div class="cat-add-block">
         <div class="section-title" style="margin-bottom:12px;">Add New Banner</div>
-        <div class="img-upload-row">
-          <input type="text" class="adm-input" id="newBannerUrl" placeholder="Paste banner image URL here"/>
-          <button type="button" class="img-upload-btn" onclick="addBannerFromUrl()">Add URL</button>
-          <label class="img-upload-btn">
-            Upload
-            <input type="file" id="newBannerFile" accept="image/*" multiple style="display:none" onchange="handleBannerUpload(this)"/>
-          </label>
+
+        <div class="form-group">
+          <label>Desktop Image <span style="font-weight:400;color:var(--text-muted,#888);">(recommended 1920×600px)</span></label>
+          <div class="img-upload-row">
+            <input type="text" class="adm-input" id="newBannerDesktopUrl" placeholder="Paste desktop banner image URL here"/>
+            <label class="img-upload-btn">
+              Upload
+              <input type="file" id="newBannerDesktopFile" accept="image/*" style="display:none" onchange="handleBannerFileSelect(this, 'desktop')"/>
+            </label>
+          </div>
+          <div class="prog-bar-wrap" id="bannerDesktopProg" style="display:none"><div class="prog-bar" id="bannerDesktopBar"></div></div>
+          <div id="bannerDesktopPreviewWrap" style="display:none;margin-top:8px;">
+            <div class="media-thumb-preview-wrap" style="width:120px;height:75px;">
+              <img id="bannerDesktopPreview" src="" alt="Desktop preview"/>
+            </div>
+          </div>
         </div>
-        <div class="prog-bar-wrap" id="bannerUploadProg" style="display:none"><div class="prog-bar" id="bannerUploadBar"></div></div>
-        <p class="cat-form-hint">These images slide automatically on the homepage, right below the hero section. Recommended size: wide banners (e.g. 1600×500px). If no banners are added, the section stays hidden on the site.</p>
+
+        <div class="form-group">
+          <label>Mobile Image <span style="font-weight:400;color:var(--text-muted,#888);">(recommended 1080×340px, same wide ratio)</span></label>
+          <div class="img-upload-row">
+            <input type="text" class="adm-input" id="newBannerMobileUrl" placeholder="Paste mobile banner image URL here"/>
+            <label class="img-upload-btn">
+              Upload
+              <input type="file" id="newBannerMobileFile" accept="image/*" style="display:none" onchange="handleBannerFileSelect(this, 'mobile')"/>
+            </label>
+          </div>
+          <div class="prog-bar-wrap" id="bannerMobileProg" style="display:none"><div class="prog-bar" id="bannerMobileBar"></div></div>
+          <div id="bannerMobilePreviewWrap" style="display:none;margin-top:8px;">
+            <div class="media-thumb-preview-wrap" style="width:120px;height:38px;">
+              <img id="bannerMobilePreview" src="" alt="Mobile preview"/>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="save-products-btn" onclick="addBanner()" id="addBannerBtn" style="width:auto; padding:0 20px; margin-top:6px;">+ Add Banner</button>
+        <p class="cat-form-hint">These images slide automatically on the homepage, right below the hero section. Desktop image shows on wide screens, mobile image shows on narrow screens — you can add just one if you only have one version. If no banners are added, the section stays hidden on the site.</p>
       </div>
 
       <!-- Existing Banners -->
       <div class="cat-add-block" style="margin-top:20px;">
         <div class="section-title" style="margin-bottom:12px;">Existing Banners</div>
-        <div id="bannersContainer" class="media-thumb-grid">
+        <div id="bannersContainer">
           <div class="empty-state"><div class="es-icon">🖼️</div><p>Loading banners...</p></div>
         </div>
       </div>
@@ -1493,8 +1520,13 @@ async function deleteCategoryUI(id, label, count) {
 
 /* ══════════════════════════════
    OFFER BANNERS
+   Each banner has an optional desktopUrl and mobileUrl. The "Add New
+   Banner" form uploads/pastes both, stages them locally, then submits
+   both together in one create call. Existing banners can have either
+   image replaced individually.
 ══════════════════════════════ */
 let allBanners = [];
+let newBannerStaged = { desktopUrl: '', desktopR2Key: null, mobileUrl: '', mobileR2Key: null };
 
 async function loadBanners() {
   const container = document.getElementById('bannersContainer');
@@ -1515,24 +1547,105 @@ function renderBannersList() {
     return;
   }
   container.innerHTML = allBanners.map(b => `
-    <div class="media-thumb-item">
-      <div class="media-thumb-preview-wrap"><img src="${escHtml(b.url)}" alt="Offer banner"/></div>
-      <div class="media-thumb-url">${escHtml(b.url)}</div>
+    <div class="media-thumb-item" style="align-items:flex-start;">
+      <div style="display:flex;gap:8px;flex:1;min-width:0;flex-wrap:wrap;">
+        <div style="min-width:140px;">
+          <div style="font-size:.7rem;color:var(--text-muted,#888);margin-bottom:4px;">Desktop</div>
+          ${b.desktopUrl
+            ? `<div class="media-thumb-preview-wrap" style="width:120px;height:75px;"><img src="${escHtml(b.desktopUrl)}" alt="Desktop banner"/></div>`
+            : `<div style="width:120px;height:75px;border:1px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:var(--text-muted,#888);">None</div>`}
+        </div>
+        <div style="min-width:140px;">
+          <div style="font-size:.7rem;color:var(--text-muted,#888);margin-bottom:4px;">Mobile</div>
+          ${b.mobileUrl
+            ? `<div class="media-thumb-preview-wrap" style="width:120px;height:38px;"><img src="${escHtml(b.mobileUrl)}" alt="Mobile banner"/></div>`
+            : `<div style="width:120px;height:38px;border:1px dashed var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:var(--text-muted,#888);">None</div>`}
+        </div>
+      </div>
       <button type="button" class="media-thumb-remove" onclick="deleteBannerUI('${escHtml(b.id)}')" title="Delete banner">✕</button>
     </div>
   `).join('');
 }
 
-async function addBannerFromUrl() {
-  const input = document.getElementById('newBannerUrl');
-  const url = input.value.trim();
-  if (!url) { showAdmToast('Please paste an image URL first', 'error'); return; }
+/* ── Staged upload handling for the "Add New Banner" form ── */
+async function handleBannerFileSelect(input, side) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  if (file.size > 40 * 1024 * 1024) { showAdmToast(`${file.name} is too large (max 40MB)`, 'error'); return; }
+  if (!file.type.startsWith('image/')) { showAdmToast(`${file.name} is not an image`, 'error'); return; }
+
+  const prog = document.getElementById(side === 'desktop' ? 'bannerDesktopProg' : 'bannerMobileProg');
+  const bar  = document.getElementById(side === 'desktop' ? 'bannerDesktopBar'  : 'bannerMobileBar');
+  prog.style.display = 'block';
 
   try {
-    const res = await apiFetch('/api/admin/banners', 'POST', { url, r2Key: guessR2Key(url) });
+    const url = await uploadFileXHR(
+      `${API}/api/admin/upload`,
+      file,
+      'banners',
+      token,
+      pct => { bar.style.width = pct + '%'; }
+    );
+    if (side === 'desktop') {
+      newBannerStaged.desktopUrl = url;
+      newBannerStaged.desktopR2Key = guessR2Key(url);
+      document.getElementById('newBannerDesktopUrl').value = url;
+      showBannerPreview('bannerDesktopPreviewWrap', 'bannerDesktopPreview', url);
+    } else {
+      newBannerStaged.mobileUrl = url;
+      newBannerStaged.mobileR2Key = guessR2Key(url);
+      document.getElementById('newBannerMobileUrl').value = url;
+      showBannerPreview('bannerMobilePreviewWrap', 'bannerMobilePreview', url);
+    }
+    showAdmToast('✓ Image uploaded', 'success');
+  } catch (e) {
+    showAdmToast('Upload failed: ' + e.message, 'error');
+  }
+
+  prog.style.display = 'none';
+}
+
+function showBannerPreview(wrapId, imgId, url) {
+  const wrap = document.getElementById(wrapId);
+  const img  = document.getElementById(imgId);
+  if (!wrap || !img) return;
+  img.src = url;
+  wrap.style.display = 'block';
+}
+
+async function addBanner() {
+  const desktopUrlInput = document.getElementById('newBannerDesktopUrl');
+  const mobileUrlInput  = document.getElementById('newBannerMobileUrl');
+
+  // A pasted URL always wins over a previously staged upload for that side,
+  // in case the admin typed over it after uploading.
+  const desktopUrl = desktopUrlInput.value.trim() || newBannerStaged.desktopUrl;
+  const mobileUrl  = mobileUrlInput.value.trim()  || newBannerStaged.mobileUrl;
+
+  if (!desktopUrl && !mobileUrl) {
+    showAdmToast('Add at least a desktop or mobile image', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('addBannerBtn');
+  btn.disabled = true; btn.textContent = 'Adding...';
+
+  try {
+    const res = await apiFetch('/api/admin/banners', 'POST', {
+      desktopUrl,
+      desktopR2Key: newBannerStaged.desktopR2Key || guessR2Key(desktopUrl),
+      mobileUrl,
+      mobileR2Key: newBannerStaged.mobileR2Key || guessR2Key(mobileUrl),
+    });
     if (res.success) {
-      input.value = '';
       showAdmToast('✓ Banner added', 'success');
+      // Reset the add-form
+      newBannerStaged = { desktopUrl: '', desktopR2Key: null, mobileUrl: '', mobileR2Key: null };
+      desktopUrlInput.value = '';
+      mobileUrlInput.value  = '';
+      document.getElementById('bannerDesktopPreviewWrap').style.display = 'none';
+      document.getElementById('bannerMobilePreviewWrap').style.display  = 'none';
       await loadBanners();
     } else {
       showAdmToast(res.error || 'Failed to add banner', 'error');
@@ -1540,46 +1653,8 @@ async function addBannerFromUrl() {
   } catch {
     showAdmToast('Network error', 'error');
   }
-}
 
-async function handleBannerUpload(input) {
-  const files = Array.from(input.files || []);
-  if (!files.length) return;
-
-  const prog = document.getElementById('bannerUploadProg');
-  const bar  = document.getElementById('bannerUploadBar');
-  prog.style.display = 'block';
-
-  let addedCount = 0;
-  for (let n = 0; n < files.length; n++) {
-    const file = files[n];
-    if (file.size > 40 * 1024 * 1024) {
-      showAdmToast(`${file.name} is too large (max 40MB)`, 'error');
-      continue;
-    }
-    if (!file.type.startsWith('image/')) {
-      showAdmToast(`${file.name} is not an image`, 'error');
-      continue;
-    }
-    try {
-      const url = await uploadFileXHR(
-        `${API}/api/admin/upload`,
-        file,
-        'banners',
-        token,
-        pct => { bar.style.width = (((n + pct / 100) / files.length) * 100) + '%'; }
-      );
-      const res = await apiFetch('/api/admin/banners', 'POST', { url, r2Key: guessR2Key(url) });
-      if (res.success) addedCount++;
-    } catch (e) {
-      showAdmToast('Upload failed: ' + e.message, 'error');
-    }
-  }
-
-  prog.style.display = 'none';
-  input.value = '';
-  if (addedCount) showAdmToast(`✓ ${addedCount} banner(s) added`, 'success');
-  await loadBanners();
+  btn.disabled = false; btn.textContent = '+ Add Banner';
 }
 
 async function deleteBannerUI(id) {
