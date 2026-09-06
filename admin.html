@@ -256,11 +256,14 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       font-family: monospace;
     }
-    .media-thumb-item .media-thumb-preview-wrap {
-      position: relative; width: 48px; height: 48px; flex-shrink: 0;
+    .media-thumb-preview-wrap {
+      position: relative; overflow: hidden; flex-shrink: 0;
     }
-    .media-thumb-item .media-thumb-preview-wrap img,
-    .media-thumb-item .media-thumb-preview-wrap video {
+    .media-thumb-item .media-thumb-preview-wrap {
+      width: 48px; height: 48px;
+    }
+    .media-thumb-preview-wrap img,
+    .media-thumb-preview-wrap video {
       width: 100%; height: 100%; object-fit: cover; border-radius: 8px;
       border: 1px solid var(--border); background: #fff;
     }
