@@ -166,6 +166,15 @@ function renderProducts(products) {
         <div class="pc-cat">${categoryLabel(p.category)}</div>
         <div class="pc-name">${escapeHtml(p.name)}</div>
         ${p.description ? `<div class="pc-desc">${escapeHtml(p.description)}</div>` : ""}
+        ${productHasColors(p) ? `
+          <div class="pc-color-dots" title="${p.colors.length} color option${p.colors.length > 1 ? "s" : ""}">
+            ${p.colors.slice(0, 6).map(c => c.hex
+              ? `<span class="pc-color-dot" style="background:${escapeHtml(c.hex)};"></span>`
+              : `<span class="pc-color-dot pc-color-dot-named"></span>`
+            ).join("")}
+            ${p.colors.length > 6 ? `<span class="pc-color-more">+${p.colors.length - 6}</span>` : ""}
+          </div>
+        ` : ""}
         <div class="pc-price-row">
           ${renderPriceBlock(p)}
         </div>
@@ -274,6 +283,43 @@ function renderDiscountBadgeHtml(p) {
    Used for cart/order totals and the data-price attribute on buttons. */
 function effectivePrice(p) {
   return hasDiscount(p) ? p.discountedPrice : p.price;
+}
+
+/* ══════════════════════════════════════
+   COLOR SWATCH HELPERS
+   A product has an optional `colors[]` array: { name, hex, media[] }.
+   - hex present  → filled circle swatch in that color
+   - hex missing  → capsule/pill showing the color name as text
+   ══════════════════════════════════════ */
+function productHasColors(p) {
+  return Array.isArray(p.colors) && p.colors.length > 0;
+}
+
+/* Renders the row of color swatches (circles for hex colors, pills for
+   named-only colors), each with its name label underneath.
+   `selectedName` highlights the active one. `onSelectFn` is the JS
+   function name to call on click, e.g. "selectDetailColor". */
+function renderColorSwatchesHtml(colors, selectedName, onSelectFn) {
+  return colors.map(c => {
+    const isActive = selectedName === c.name;
+    const swatch = c.hex
+      ? `<button type="button" class="pm-color-swatch ${isActive ? "active" : ""}"
+           style="background:${escapeHtml(c.hex)};"
+           data-color="${escapeHtml(c.name)}"
+           title="${escapeHtml(c.name)}"
+           onclick="${onSelectFn}(this)"></button>`
+      : `<button type="button" class="pm-color-pill ${isActive ? "active" : ""}"
+           data-color="${escapeHtml(c.name)}"
+           title="${escapeHtml(c.name)}"
+           onclick="${onSelectFn}(this)">${escapeHtml(c.name)}</button>`;
+
+    return `
+      <div class="pm-color-item">
+        ${swatch}
+        <span class="pm-color-label">${escapeHtml(c.name)}</span>
+      </div>
+    `;
+  }).join("");
 }
 
 /* ══════════════════════════════════════
@@ -565,12 +611,13 @@ function changeFeaturedMedia(direction) {
   `;
   document.head.appendChild(s);
 })();
-function buildWALink(product, price, desc, size, sides) {
+function buildWALink(product, price, desc, size, sides, color) {
   const msg = [
     `Hello ${BRAND_NAME}!`,
     ``,
     `I want to place an order for:`,
     `Product: ${product}`,
+    ...(color ? [`Color: ${color}`] : []),
     ...(size ? [`Size: ${size}`] : []),
     ...(sides && sides.length ? [`Print Side: ${sides.join(", ")}`] : []),
     `Starting Price: ${price}`,
@@ -583,7 +630,7 @@ function buildWALink(product, price, desc, size, sides) {
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
-function buildEmailLink(product, price, desc, size, sides) {
+function buildEmailLink(product, price, desc, size, sides, color) {
   const subject = `Order Enquiry: ${product} — ${BRAND_NAME}`;
   const body = [
     `Hello ${BRAND_NAME},`,
@@ -591,6 +638,7 @@ function buildEmailLink(product, price, desc, size, sides) {
     `I would like to place an order for the following:`,
     ``,
     `Product     : ${product}`,
+    ...(color ? [`Color       : ${color}`] : []),
     ...(size ? [`Size        : ${size}`] : []),
     ...(sides && sides.length ? [`Print Side  : ${sides.join(", ")}`] : []),
     `Starting Price : ${price}`,
@@ -620,15 +668,15 @@ function buildGeneralWALink() {
 /* ══════════════════════════════════════
    ORDER POPUP MODAL
    ══════════════════════════════════════ */
-function orderProduct(el, size, sides) {
+function orderProduct(el, size, sides, color) {
   const product = el.dataset.product || "Custom Product";
   const price   = el.dataset.price   || "Contact for pricing";
   const desc    = el.dataset.desc    || "Custom print order";
   addRipple(el);
-  showOrderModal(product, price, desc, size || null, sides || []);
+  showOrderModal(product, price, desc, size || null, sides || [], color || null);
 }
 
-function showOrderModal(product, price, desc, size, sides) {
+function showOrderModal(product, price, desc, size, sides, color) {
   const old = document.getElementById("pm-modal");
   if (old) old.remove();
 
@@ -647,7 +695,7 @@ function showOrderModal(product, price, desc, size, sides) {
           <svg viewBox="0 0 24 24" fill="white" width="20" height="20"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
           Order via WhatsApp
         </a>
-        <a href="${buildEmailLink(product, price, desc, size, sides)}" class="pm-btn-email">
+        <a href="${buildEmailLink(product, price, desc, size, sides, color)}" class="pm-btn-email">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           Order via Email
         </a>
@@ -678,13 +726,13 @@ function showOrderModal(product, price, desc, size, sides) {
 
   modal.querySelector("#pmBtnWA").addEventListener("click", function(e) {
     e.preventDefault();
-    showDeliveryPopup("wa", buildWALink(product, price, desc, size, sides), null, product, price, false, size, sides);
+    showDeliveryPopup("wa", buildWALink(product, price, desc, size, sides, color), null, product, price, false, size, sides, color);
     closeModal();
   });
 
   modal.querySelector(".pm-btn-email").addEventListener("click", function(e) {
     e.preventDefault();
-    showDeliveryPopup("email", null, buildEmailLink(product, price, desc, size, sides), product, price, false, size, sides);
+    showDeliveryPopup("email", null, buildEmailLink(product, price, desc, size, sides, color), product, price, false, size, sides, color);
     closeModal();
   });
 
@@ -702,9 +750,11 @@ function showOrderModal(product, price, desc, size, sides) {
    ══════════════════════════════════════ */
 let detailModalSelectedSize = null;
 let detailModalSelectedSides = [];
+let detailModalSelectedColor = null;
 let detailModalMedia = [];
 let detailModalIndex = 0;
 let detailModalOutOfStock = false;
+let detailModalProductId = null;
 
 function openProductDetail(productId, evt) {
   // Guard: if the click originated from the media carousel or its buttons,
@@ -715,17 +765,20 @@ function openProductDetail(productId, evt) {
   const p = allProducts.find(x => x.id === productId);
   if (!p) return;
 
-  detailModalSelectedSize = null;
+  detailModalSelectedSize  = null;
   detailModalSelectedSides = [];
+  detailModalSelectedColor = null;
   detailModalIndex = 0;
   detailModalOutOfStock = p.inStock === false;
+  detailModalProductId = p.id;
 
-  const media = Array.isArray(p.media) && p.media.length
+  const defaultMedia = Array.isArray(p.media) && p.media.length
     ? p.media
     : (p.imageUrl ? [{ url: p.imageUrl, type: "image" }] : []);
-  detailModalMedia = media;
-  const hasSizes = Array.isArray(p.sizes) && p.sizes.length > 0;
-  const hasSides = Array.isArray(p.printSides) && p.printSides.length > 0;
+  detailModalMedia = defaultMedia;
+  const hasSizes  = Array.isArray(p.sizes) && p.sizes.length > 0;
+  const hasSides  = Array.isArray(p.printSides) && p.printSides.length > 0;
+  const hasColors = productHasColors(p);
 
   const old = document.getElementById("pm-detail-modal");
   if (old) old.remove();
@@ -739,11 +792,9 @@ function openProductDetail(productId, evt) {
 
       <div class="pm-dtl-media">
         <div class="pm-dtl-media-content" id="pmDtlMediaContent"></div>
-        ${media.length > 1 ? `
-          <button class="pm-dtl-nav pm-dtl-prev" onclick="changeDetailMedia(-1)">${chevronSvg("left")}</button>
-          <button class="pm-dtl-nav pm-dtl-next" onclick="changeDetailMedia(1)">${chevronSvg("right")}</button>
-          <div class="pm-dtl-dots">${media.map((_, i) => `<span class="pm-dtl-dot ${i === 0 ? "active" : ""}"></span>`).join("")}</div>
-        ` : ""}
+        <button class="pm-dtl-nav pm-dtl-prev" onclick="changeDetailMedia(-1)" style="display:${media.length > 1 ? "flex" : "none"}">${chevronSvg("left")}</button>
+        <button class="pm-dtl-nav pm-dtl-next" onclick="changeDetailMedia(1)" style="display:${media.length > 1 ? "flex" : "none"}">${chevronSvg("right")}</button>
+        <div class="pm-dtl-dots">${media.map((_, i) => `<span class="pm-dtl-dot ${i === 0 ? "active" : ""}"></span>`).join("")}</div>
       </div>
 
       <div class="pm-dtl-info">
@@ -758,6 +809,15 @@ function openProductDetail(productId, evt) {
         </div>
         ${p.inStock === false ? `<div class="pm-dtl-oos-badge">Out of Stock</div>` : ""}
         ${p.description ? `<p class="pm-dtl-desc">${escapeHtml(p.description)}</p>` : ""}
+
+        ${hasColors ? `
+          <div class="pm-dtl-sizes pm-dtl-colors">
+            <div class="pm-dtl-sizes-label">Color${detailModalSelectedColor ? `: ${escapeHtml(detailModalSelectedColor)}` : ""}</div>
+            <div class="pm-color-row" id="pmDtlColorRow">
+              ${renderColorSwatchesHtml(p.colors, detailModalSelectedColor, "selectDetailColor")}
+            </div>
+          </div>
+        ` : ""}
 
         ${hasSizes ? `
           <div class="pm-dtl-sizes">
@@ -815,7 +875,7 @@ function openProductDetail(productId, evt) {
     if (detailModalOutOfStock) return;
     if (hasSizes && !detailModalSelectedSize) { flashSizeHint(); return; }
     if (hasSides && detailModalSelectedSides.length === 0) { flashSideHint(); return; }
-    addToCart(this, detailModalSelectedSize, detailModalSelectedSides);
+    addToCart(this, detailModalSelectedSize, detailModalSelectedSides, detailModalSelectedColor);
     closeModal();
   });
 
@@ -823,7 +883,7 @@ function openProductDetail(productId, evt) {
     if (detailModalOutOfStock) return;
     if (hasSizes && !detailModalSelectedSize) { flashSizeHint(); return; }
     if (hasSides && detailModalSelectedSides.length === 0) { flashSideHint(); return; }
-    orderProduct(this, detailModalSelectedSize, detailModalSelectedSides);
+    orderProduct(this, detailModalSelectedSize, detailModalSelectedSides, detailModalSelectedColor);
     closeModal();
   });
 }
@@ -844,6 +904,56 @@ function selectDetailSize(btn) {
 
   const hint = document.getElementById("pmDtlSizeHint");
   if (hint) { hint.textContent = `Size: ${detailModalSelectedSize} selected`; hint.classList.add("ok"); }
+}
+
+/* Color is a single-select swatch/pill row. Selecting a color:
+   - highlights that swatch
+   - switches the media gallery to that color's own media (if it has any),
+     falling back to the product's default media otherwise
+   Color is always optional — it never blocks Add to Cart / Order Now. */
+function selectDetailColor(btn) {
+  const p = allProducts.find(x => x.id === detailModalProductId);
+  if (!p) return;
+
+  const colorName = btn.dataset.color;
+  // Clicking the already-selected color deselects it (back to default media)
+  const deselecting = detailModalSelectedColor === colorName;
+  detailModalSelectedColor = deselecting ? null : colorName;
+
+  document.querySelectorAll("#pmDtlColorRow .pm-color-swatch, #pmDtlColorRow .pm-color-pill").forEach(el => {
+    el.classList.toggle("active", !deselecting && el.dataset.color === colorName);
+  });
+  const label = document.querySelector(".pm-dtl-colors .pm-dtl-sizes-label");
+  if (label) label.textContent = detailModalSelectedColor ? `Color: ${detailModalSelectedColor}` : "Color";
+
+  const defaultMedia = Array.isArray(p.media) && p.media.length
+    ? p.media
+    : (p.imageUrl ? [{ url: p.imageUrl, type: "image" }] : []);
+
+  let mediaForColor = defaultMedia;
+  if (detailModalSelectedColor) {
+    const colorObj = (p.colors || []).find(c => c.name === detailModalSelectedColor);
+    if (colorObj && Array.isArray(colorObj.media) && colorObj.media.length) {
+      mediaForColor = colorObj.media; // color has its own media — use it
+    }
+    // else: no media for this color — fallback stays as defaultMedia
+  }
+
+  detailModalMedia = mediaForColor;
+  detailModalIndex = 0;
+  renderDetailMedia();
+  renderDetailMediaDots();
+}
+
+/* Rebuilds the dot indicators under the media gallery to match the
+   current media length (needed since selecting a color can change how
+   many media items there are). */
+function renderDetailMediaDots() {
+  const dotsWrap = document.querySelector(".pm-dtl-dots");
+  if (!dotsWrap) return;
+  dotsWrap.innerHTML = detailModalMedia.map((_, i) => `<span class="pm-dtl-dot ${i === 0 ? "active" : ""}"></span>`).join("");
+  const nav = document.querySelectorAll(".pm-dtl-nav");
+  nav.forEach(btn => { btn.style.display = detailModalMedia.length > 1 ? "flex" : "none"; });
 }
 
 /* Print Side is a checkbox-style multi-select: clicking a chip toggles it
@@ -948,7 +1058,7 @@ function handleCardAddToCart(el) {
     showToast(needsSize && needsSide ? "Please select a size and print side first" : (needsSize ? "Please select a size first" : "Please select a print side first"));
     return;
   }
-  addToCart(el, null, []);
+  addToCart(el, null, [], null);
 }
 
 function handleCardOrderNow(el) {
@@ -965,7 +1075,7 @@ function handleCardOrderNow(el) {
     showToast(needsSize && needsSide ? "Please select a size and print side first" : (needsSize ? "Please select a size first" : "Please select a print side first"));
     return;
   }
-  orderProduct(el, null, []);
+  orderProduct(el, null, [], null);
 }
 
 /* ══════════════════════════════════════
@@ -1161,27 +1271,29 @@ function loadCart() {
   } catch { cart = []; }
 }
 
-function addToCart(el, size, sides) {
+function addToCart(el, size, sides, color) {
   const product  = el.dataset.product;
   const price    = el.dataset.price;
   const desc     = el.dataset.desc;
   const priceNum = parseInt(price.replace(/[^0-9]/g, "")) || 0;
   size  = size || null;
   sides = Array.isArray(sides) ? sides : [];
+  color = color || null;
 
-  // Same product but a different size or print-side combo is a distinct
-  // cart line (e.g. one Medium/Front and one Large/Front+Back should show separately).
+  // Same product but a different size, print-side combo, or color is a
+  // distinct cart line (e.g. Navy/Medium and Red/Large should show separately).
   const sidesKey = sides.slice().sort().join(",");
-  const existing = cart.find(i => i.product === product && i.size === size && (i.sides || []).slice().sort().join(",") === sidesKey);
+  const existing = cart.find(i => i.product === product && i.size === size && i.color === color && (i.sides || []).slice().sort().join(",") === sidesKey);
   if (existing) {
     existing.qty++;
   } else {
-    cart.push({ product, price, priceNum, desc, size, sides, qty: 1 });
+    cart.push({ product, price, priceNum, desc, size, sides, color, qty: 1 });
   }
   saveCart();
   updateCartBadge();
   addRipple(el);
   const bits = [];
+  if (color) bits.push(`Color: ${color}`);
   if (size) bits.push(`Size: ${size}`);
   if (sides.length) bits.push(`Print Side: ${sides.join(", ")}`);
   showToast(bits.length ? `✓ ${product} (${bits.join(" | ")}) added to cart!` : `✓ ${product} added to cart!`);
@@ -1222,7 +1334,7 @@ function renderCartItems() {
   itemsEl.innerHTML = cart.map((item, idx) => `
     <div class="cart-item">
       <div class="ci-info">
-        <div class="ci-name">${escapeHtml(item.product)}${item.size ? ` <span class="ci-size">— Size: ${escapeHtml(item.size)}</span>` : ""}${item.sides && item.sides.length ? ` <span class="ci-size ci-sides">— Print Side: ${escapeHtml(item.sides.join(", "))}</span>` : ""}</div>
+        <div class="ci-name">${escapeHtml(item.product)}${item.color ? ` <span class="ci-size ci-color">— Color: ${escapeHtml(item.color)}</span>` : ""}${item.size ? ` <span class="ci-size">— Size: ${escapeHtml(item.size)}</span>` : ""}${item.sides && item.sides.length ? ` <span class="ci-size ci-sides">— Print Side: ${escapeHtml(item.sides.join(", "))}</span>` : ""}</div>
         <div class="ci-price">${escapeHtml(item.price)} each &nbsp;·&nbsp;
           <span class="ci-subtotal">Rs.${item.priceNum * item.qty}</span>
         </div>
@@ -1270,6 +1382,7 @@ function buildCartMsg() {
     ``,
     ...cart.map(i => {
       const bits = [];
+      if (i.color) bits.push(`Color: ${i.color}`);
       if (i.size) bits.push(`Size: ${i.size}`);
       if (i.sides && i.sides.length) bits.push(`Print Side: ${i.sides.join(", ")}`);
       const suffix = bits.length ? ` (${bits.join(" | ")})` : "";
@@ -1305,7 +1418,7 @@ function cartOrderEmail() {
    DELIVERY POPUP — naam/phone/address
    Saves to KV via API before redirecting
    ══════════════════════════════════════ */
-function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size, sides) {
+function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size, sides, color) {
   const old = document.getElementById("pm-delivery-popup");
   if (old) old.remove();
 
@@ -1358,10 +1471,10 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
     let items = [];
     let total = 0;
     if (isCart) {
-      items = cart.map(i => ({ product: i.product, price: i.price, qty: i.qty, size: i.size || null, sides: i.sides || [] }));
+      items = cart.map(i => ({ product: i.product, price: i.price, qty: i.qty, size: i.size || null, sides: i.sides || [], color: i.color || null }));
       total = cart.reduce((s, i) => s + i.priceNum * i.qty, 0);
     } else if (product) {
-      items = [{ product, price, qty: 1, size: size || null, sides: sides || [] }];
+      items = [{ product, price, qty: 1, size: size || null, sides: sides || [], color: color || null }];
       total = parseInt((price || "0").replace(/[^0-9]/g, "")) || 0;
     }
 
