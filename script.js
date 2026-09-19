@@ -792,9 +792,9 @@ function openProductDetail(productId, evt) {
 
       <div class="pm-dtl-media">
         <div class="pm-dtl-media-content" id="pmDtlMediaContent"></div>
-        <button class="pm-dtl-nav pm-dtl-prev" onclick="changeDetailMedia(-1)" style="display:${media.length > 1 ? "flex" : "none"}">${chevronSvg("left")}</button>
-        <button class="pm-dtl-nav pm-dtl-next" onclick="changeDetailMedia(1)" style="display:${media.length > 1 ? "flex" : "none"}">${chevronSvg("right")}</button>
-        <div class="pm-dtl-dots">${media.map((_, i) => `<span class="pm-dtl-dot ${i === 0 ? "active" : ""}"></span>`).join("")}</div>
+        <button class="pm-dtl-nav pm-dtl-prev" onclick="changeDetailMedia(-1)" style="display:${defaultMedia.length > 1 ? "flex" : "none"}">${chevronSvg("left")}</button>
+        <button class="pm-dtl-nav pm-dtl-next" onclick="changeDetailMedia(1)" style="display:${defaultMedia.length > 1 ? "flex" : "none"}">${chevronSvg("right")}</button>
+        <div class="pm-dtl-dots">${defaultMedia.map((_, i) => `<span class="pm-dtl-dot ${i === 0 ? "active" : ""}"></span>`).join("")}</div>
       </div>
 
       <div class="pm-dtl-info">
