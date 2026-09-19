@@ -228,6 +228,34 @@
       background: var(--accent); border-color: var(--accent); color: #fff;
     }
 
+    /* Colors block — one card per color, with name + hex-picker + optional
+       per-color media upload. Same dark-surface visual language as the
+       rest of the admin form. */
+    .color-list { display: flex; flex-direction: column; gap: 10px; }
+    .color-card {
+      background: var(--surface2); border: 1.5px solid var(--border);
+      border-radius: 10px; padding: 12px;
+    }
+    .color-card-row { display: flex; gap: 10px; align-items: center; }
+    .color-card-row .adm-input { margin-bottom: 0; flex: 1; }
+    .color-hex-picker {
+      width: 42px; height: 42px; padding: 2px; border-radius: 8px;
+      border: 1.5px solid var(--border); background: var(--bg); cursor: pointer;
+      flex-shrink: 0;
+    }
+    .color-hex-text {
+      width: 90px; flex-shrink: 0;
+    }
+    .color-card-remove {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 1.1rem; flex-shrink: 0; padding: 4px 8px;
+    }
+    .color-card-remove:hover { color: var(--red); }
+    .color-card-media { margin-top: 10px; }
+    .color-card-media-hint {
+      font-size: .74rem; color: var(--muted); margin-bottom: 6px;
+    }
+
     .img-upload-row { display: flex; gap: 10px; align-items: flex-end; }
     .img-upload-row .adm-input { flex: 1; margin-bottom: 0; }
     .img-upload-btn {
@@ -881,7 +909,8 @@
         </div>
 
         <button type="button" class="save-products-btn" onclick="addBanner()" id="addBannerBtn" style="width:auto; padding:0 20px; margin-top:6px;">+ Add Banner</button>
-        <p class="cat-form-hint">These images slide automatically on the homepage, right below the hero section. Desktop image shows on wide screens, mobile image shows on narrow screens — you can add just one if you only have one version. If no banners are added, the section stays hidden on the site.</p>
+        <p class="cat-form-hint">These images slide automatically on the homepage, right below the hero section. You only need to upload one image (Desktop) — as long as it's a wide image (recommended 1920×600px, ratio ~16:5 or 3:1), it will automatically display correctly on mobile, tablet and PC. Add a separate Mobile image only if you want a specially-cropped version for small screens. If no banners are added, the section stays hidden on the site.</p>
+        <p class="cat-form-hint" style="margin-top:.3rem;">Tip: if you only want to upload one image, use a wide-safe ratio like 3:1, 16:5, or 3:2 — it will display correctly on mobile, tablet, and desktop without needing a separate mobile image.</p>
       </div>
 
       <!-- Existing Banners -->
@@ -951,6 +980,11 @@
         <input type="text" class="adm-input" id="editCustomSide" placeholder="Add custom side e.g. Pocket, Hood"/>
         <button type="button" class="img-upload-btn" onclick="addCustomSide('edit', 'editCustomSide', 'edit-sides')">+ Add</button>
       </div>
+    </div>
+    <div class="form-group">
+      <label>Colors (optional — customers will see color swatches on the product)</label>
+      <div class="color-list" id="edit-colors"></div>
+      <button type="button" class="img-upload-btn" style="margin-top:.5rem;" onclick="addColor('edit', 'edit-colors')">+ Add another color</button>
     </div>
     <div class="form-group" style="margin-bottom:1rem;">
       <label>Images / Videos</label>
@@ -1768,6 +1802,16 @@ function removeProductForm(idx) {
     if (oldSides[`add:${oldIdx}`]) sidesStore[`add:${newIdx}`] = oldSides[`add:${oldIdx}`];
   });
 
+  // Re-index colorsStore 'add:N' keys the same way
+  const oldColors = {};
+  Object.keys(colorsStore).forEach(k => {
+    if (k.startsWith('add:')) { oldColors[k] = colorsStore[k]; delete colorsStore[k]; }
+  });
+  productForms.forEach((_, newIdx) => {
+    const oldIdx = newIdx >= idx ? newIdx + 1 : newIdx;
+    if (oldColors[`add:${oldIdx}`]) colorsStore[`add:${newIdx}`] = oldColors[`add:${oldIdx}`];
+  });
+
   renderProductForms();
 }
 
@@ -1831,6 +1875,11 @@ function renderProductForms() {
           <button type="button" class="img-upload-btn" onclick="addCustomSide('add:${i}', 'pf-customside-${i}', 'pf-sides-${i}')">+ Add</button>
         </div>
       </div>
+      <div class="form-group">
+        <label>Colors (optional — customers will see color swatches on the product)</label>
+        <div class="color-list" id="pf-colors-${i}"></div>
+        <button type="button" class="img-upload-btn" style="margin-top:.5rem;" onclick="addColor('add:${i}', 'pf-colors-${i}')">+ Add another color</button>
+      </div>
       <div class="form-group" style="margin-bottom:0;">
         <label>Images / Videos</label>
         <div class="img-upload-row">
@@ -1852,6 +1901,7 @@ function renderProductForms() {
     renderMediaGridGeneric(`pf-media-grid-${i}`, `add:${i}`, null);
     renderSizeChips(`pf-sizes-${i}`, `add:${i}`);
     renderSideChips(`pf-sides-${i}`, `add:${i}`);
+    renderColorList(`pf-colors-${i}`, `add:${i}`);
   });
   cddRefresh();
 }
@@ -1949,6 +1999,210 @@ function addCustomSide(key, inputId, containerId) {
   setSides(key, [...sides, val]);
   renderSideChips(containerId, key);
   input.value = '';
+}
+
+/* ── SHARED COLOR MANAGEMENT (used by Add form, Edit modal) ──
+   Each color: { id, name, hex, media: [{url, type, r2Key}] }
+   `id` is a local-only key (not sent to the backend) used to keep each
+   color card's DOM elements and media store entry stable across re-renders. */
+const colorsStore = {}; // key: 'add:0', 'edit' → array of color objects
+let colorIdCounter = 0;
+
+function getColors(key) {
+  return colorsStore[key] || [];
+}
+function setColors(key, colors) {
+  colorsStore[key] = colors;
+}
+
+function addColor(key, containerId) {
+  const colors = getColors(key);
+  const id = `c${++colorIdCounter}`;
+  colors.push({ id, name: '', hex: '', media: [] });
+  setColors(key, colors);
+  renderColorList(containerId, key);
+}
+
+function removeColor(key, colorId, containerId) {
+  const colors = getColors(key);
+  const color = colors.find(c => c.id === colorId);
+  // Clean up any uploaded media for this color from R2 before removing it
+  if (color && Array.isArray(color.media)) {
+    color.media.forEach(m => {
+      const r2Key = m.r2Key || guessR2Key(m.url);
+      if (r2Key) apiFetch('/api/admin/delete-file', 'DELETE', { key: r2Key }).catch(() => {});
+    });
+  }
+  setColors(key, colors.filter(c => c.id !== colorId));
+  renderColorList(containerId, key);
+}
+
+function updateColorField(key, colorId, field, value) {
+  const colors = getColors(key);
+  const color = colors.find(c => c.id === colorId);
+  if (!color) return;
+  color[field] = value;
+  setColors(key, colors);
+}
+
+function renderColorList(containerId, key) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  const colors = getColors(key);
+
+  if (!colors.length) {
+    wrap.innerHTML = `<p style="font-size:.8rem;color:var(--muted);margin:0;">No colors added — this product will look the same for everyone.</p>`;
+    return;
+  }
+
+  wrap.innerHTML = colors.map(c => `
+    <div class="color-card" id="cc-${key.replace(':', '-')}-${c.id}">
+      <div class="color-card-row">
+        <input type="color" class="color-hex-picker" value="${c.hex || '#cccccc'}"
+          oninput="onColorHexPicked('${key}', '${c.id}', this.value)" title="Pick a color"/>
+        <input type="text" class="adm-input color-hex-text" placeholder="#hex (optional)"
+          value="${escAttr(c.hex || '')}"
+          onchange="onColorHexTyped('${key}', '${c.id}', this)"/>
+        <input type="text" class="adm-input" placeholder="Color name e.g. Navy Blue"
+          value="${escAttr(c.name || '')}"
+          onchange="updateColorField('${key}', '${c.id}', 'name', this.value.trim())"/>
+        <button type="button" class="color-card-remove" onclick="removeColor('${key}', '${c.id}', '${containerId}')" title="Remove color">✕</button>
+      </div>
+      <div class="color-card-media">
+        <div class="color-card-media-hint">Optional — images/videos for this color specifically. Leave empty to use the product's default images.</div>
+        <div class="img-upload-row">
+          <input type="text" class="adm-input" id="cc-url-${key.replace(':', '-')}-${c.id}" placeholder="Paste image/video URL here"/>
+          <button type="button" class="img-upload-btn" onclick="addColorMediaFromUrl('${key}', '${c.id}', 'cc-url-${key.replace(':', '-')}-${c.id}', 'cc-grid-${key.replace(':', '-')}-${c.id}')">Add URL</button>
+          <label class="img-upload-btn">
+            Upload
+            <input type="file" accept="image/*,video/mp4,video/webm" multiple style="display:none"
+              onchange="handleColorImgUpload('${key}', '${c.id}', this, 'cc-grid-${key.replace(':', '-')}-${c.id}')"/>
+          </label>
+        </div>
+        <div class="media-thumb-grid" id="cc-grid-${key.replace(':', '-')}-${c.id}"></div>
+      </div>
+    </div>
+  `).join('');
+
+  colors.forEach(c => renderColorMediaGrid(key, c.id));
+}
+
+function escAttr(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function onColorHexPicked(key, colorId, hexValue) {
+  updateColorField(key, colorId, 'hex', hexValue);
+  const wrap = document.getElementById(`cc-${key.replace(':', '-')}-${colorId}`);
+  const textInput = wrap?.querySelector('.color-hex-text');
+  if (textInput) textInput.value = hexValue;
+}
+
+function onColorHexTyped(key, colorId, input) {
+  let val = input.value.trim();
+  if (val && !val.startsWith('#')) val = '#' + val;
+  if (val && !/^#[0-9a-fA-F]{3,8}$/.test(val)) {
+    showAdmToast('That doesn\'t look like a valid hex color', 'error');
+    return;
+  }
+  updateColorField(key, colorId, 'hex', val);
+  input.value = val;
+  const wrap = document.getElementById(`cc-${key.replace(':', '-')}-${colorId}`);
+  const picker = wrap?.querySelector('.color-hex-picker');
+  if (picker && val) picker.value = val;
+}
+
+function renderColorMediaGrid(key, colorId) {
+  const gridId = `cc-grid-${key.replace(':', '-')}-${colorId}`;
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  const colors = getColors(key);
+  const color = colors.find(c => c.id === colorId);
+  const media = color?.media || [];
+  const mediaJson = JSON.stringify(media.map(m => ({ url: m.url, type: m.type }))).replace(/'/g, "&#39;");
+
+  grid.innerHTML = media.map((m, idx) => `
+    <div class="media-thumb-item">
+      <span class="media-thumb-url">${m.url}</span>
+      <div class="media-thumb-preview-wrap" onclick='openAdminLightbox(${mediaJson}, ${idx})'>
+        ${m.type === 'video' ? `<video src="${m.url}" muted></video>` : `<img src="${m.url}"/>`}
+        <span class="media-thumb-badge">${m.type === 'video' ? 'VID' : 'IMG'}</span>
+      </div>
+      <button type="button" class="media-thumb-remove" onclick="removeColorMediaItem('${key}', '${colorId}', ${idx})">✕</button>
+    </div>
+  `).join('');
+}
+
+async function removeColorMediaItem(key, colorId, idx) {
+  const colors = getColors(key);
+  const color = colors.find(c => c.id === colorId);
+  if (!color) return;
+  const item = color.media[idx];
+  if (!item) return;
+
+  const r2Key = item.r2Key || guessR2Key(item.url);
+  if (r2Key) {
+    try { await apiFetch('/api/admin/delete-file', 'DELETE', { key: r2Key }); }
+    catch { showAdmToast('Warning: could not delete file from storage', 'error'); }
+  }
+
+  color.media.splice(idx, 1);
+  setColors(key, colors);
+  renderColorMediaGrid(key, colorId);
+}
+
+function addColorMediaFromUrl(key, colorId, urlInputId, gridId) {
+  const input = document.getElementById(urlInputId);
+  if (!input) return;
+  const url = input.value.trim();
+  if (!url) { showAdmToast('Paste an image or video URL first', 'error'); return; }
+  try { new URL(url); } catch { showAdmToast('That doesn\'t look like a valid URL', 'error'); return; }
+
+  const colors = getColors(key);
+  const color = colors.find(c => c.id === colorId);
+  if (!color) return;
+  if (color.media.some(m => m.url === url)) { showAdmToast('That URL is already added', 'error'); return; }
+
+  color.media.push({ url, type: detectMediaTypeFromUrl(url), r2Key: null });
+  setColors(key, colors);
+  renderColorMediaGrid(key, colorId);
+  input.value = '';
+  showAdmToast('Image added', 'success');
+}
+
+async function handleColorImgUpload(key, colorId, input, gridId) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+
+  const colors = getColors(key);
+  const color = colors.find(c => c.id === colorId);
+  if (!color) return;
+
+  for (let n = 0; n < files.length; n++) {
+    const file = files[n];
+    if (file.size > 40 * 1024 * 1024) { showAdmToast(`${file.name} is too large (max 40MB)`, 'error'); continue; }
+    if (!file.type.startsWith('image/') && !['video/mp4', 'video/webm'].includes(file.type)) {
+      showAdmToast(`${file.name} is not a supported file`, 'error'); continue;
+    }
+    try {
+      const url = await uploadFileXHR(`${API}/api/admin/upload`, file, 'products', token, () => {});
+      color.media.push({ url, type: file.type.startsWith('video/') ? 'video' : 'image', r2Key: guessR2Key(url) });
+    } catch (e) {
+      showAdmToast('Upload failed: ' + e.message, 'error');
+    }
+  }
+
+  setColors(key, colors);
+  renderColorMediaGrid(key, colorId);
+  showAdmToast(`${color.media.length} file(s) total for this color`, 'success');
+}
+
+/* Strips the local-only `id` field and drops empty/unnamed colors before
+   sending to the backend — the backend doesn't need or store the id. */
+function collectColorsForSave(key) {
+  return getColors(key)
+    .filter(c => c.name && c.name.trim())
+    .map(c => ({ name: c.name.trim(), hex: c.hex || '', media: c.media || [] }));
 }
 
 /* ── ADD MEDIA FROM PASTED URL ── */
@@ -2131,7 +2385,8 @@ async function saveAllProducts() {
       imageUrl:    firstImage ? firstImage.url : '',
       media:       media,
       sizes:       getSizes(`add:${i}`),
-      printSides:  getSides(`add:${i}`)
+      printSides:  getSides(`add:${i}`),
+      colors:      collectColorsForSave(`add:${i}`)
     };
   }).filter(p => p.name && p.price);
 
@@ -2153,6 +2408,7 @@ async function saveAllProducts() {
       Object.keys(mediaStore).forEach(k => { if (k.startsWith('add:')) delete mediaStore[k]; });
       Object.keys(sizesStore).forEach(k => { if (k.startsWith('add:')) delete sizesStore[k]; });
       Object.keys(sidesStore).forEach(k => { if (k.startsWith('add:')) delete sidesStore[k]; });
+      Object.keys(colorsStore).forEach(k => { if (k.startsWith('add:')) delete colorsStore[k]; });
       addProductForm();
       loadProducts();
     } else {
@@ -2312,6 +2568,12 @@ async function openEditModal(id) {
   setSides('edit', Array.isArray(p.printSides) ? [...p.printSides] : []);
   renderSideChips('edit-sides', 'edit');
 
+  const existingColors = Array.isArray(p.colors)
+    ? p.colors.map(c => ({ id: `c${++colorIdCounter}`, name: c.name || '', hex: c.hex || '', media: Array.isArray(c.media) ? [...c.media] : [] }))
+    : [];
+  setColors('edit', existingColors);
+  renderColorList('edit-colors', 'edit');
+
   document.getElementById('editModal').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -2322,6 +2584,7 @@ function closeEditModal() {
   setMedia('edit', []);
   setSizes('edit', []);
   setSides('edit', []);
+  setColors('edit', []);
 }
 
 async function handleEditImageUpload(input) {
@@ -2364,6 +2627,7 @@ async function saveEditProduct() {
       media:       media,
       sizes:       getSizes('edit'),
       printSides:  getSides('edit'),
+      colors:      collectColorsForSave('edit'),
     });
     if (res.success) {
       showAdmToast('✓ Product updated!', 'success');
