@@ -873,44 +873,25 @@
         <div class="section-title" style="margin-bottom:12px;">Add New Banner</div>
 
         <div class="form-group">
-          <label>Desktop Image <span style="font-weight:400;color:var(--text-muted,#888);">(recommended 1920×600px)</span></label>
+          <label>Banner Image <span style="font-weight:400;color:var(--text-muted,#888);">(recommended 1920×600px, ratio ~16:5 or 3:1 — displays correctly on mobile, tablet and PC)</span></label>
           <div class="img-upload-row">
-            <input type="text" class="adm-input" id="newBannerDesktopUrl" placeholder="Paste desktop banner image URL here"/>
+            <input type="text" class="adm-input" id="newBannerDesktopUrl" placeholder="Paste banner image URL here"/>
             <label class="img-upload-btn">
               Upload
-              <input type="file" id="newBannerDesktopFile" accept="image/*" style="display:none" onchange="handleBannerFileSelect(this, 'desktop')"/>
+              <input type="file" id="newBannerDesktopFile" accept="image/*" style="display:none" onchange="handleBannerFileSelect(this)"/>
             </label>
           </div>
           <div class="prog-bar-wrap" id="bannerDesktopProg" style="display:none"><div class="prog-bar" id="bannerDesktopBar"></div></div>
           <div id="bannerDesktopPreviewWrap" style="display:none;margin-top:8px;align-items:center;gap:10px;" class="banner-prev-row">
             <div class="media-thumb-preview-wrap" style="width:120px;height:75px;">
-              <img id="bannerDesktopPreview" src="" alt="Desktop preview"/>
+              <img id="bannerDesktopPreview" src="" alt="Banner preview"/>
             </div>
-            <button type="button" class="banner-cancel-btn" onclick="cancelStagedBanner('desktop')" title="Remove this image">✕ Remove</button>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Mobile Image <span style="font-weight:400;color:var(--text-muted,#888);">(recommended 1080×340px, same wide ratio)</span></label>
-          <div class="img-upload-row">
-            <input type="text" class="adm-input" id="newBannerMobileUrl" placeholder="Paste mobile banner image URL here"/>
-            <label class="img-upload-btn">
-              Upload
-              <input type="file" id="newBannerMobileFile" accept="image/*" style="display:none" onchange="handleBannerFileSelect(this, 'mobile')"/>
-            </label>
-          </div>
-          <div class="prog-bar-wrap" id="bannerMobileProg" style="display:none"><div class="prog-bar" id="bannerMobileBar"></div></div>
-          <div id="bannerMobilePreviewWrap" style="display:none;margin-top:8px;align-items:center;gap:10px;" class="banner-prev-row">
-            <div class="media-thumb-preview-wrap" style="width:120px;height:38px;">
-              <img id="bannerMobilePreview" src="" alt="Mobile preview"/>
-            </div>
-            <button type="button" class="banner-cancel-btn" onclick="cancelStagedBanner('mobile')" title="Remove this image">✕ Remove</button>
+            <button type="button" class="banner-cancel-btn" onclick="cancelStagedBanner()" title="Remove this image">✕ Remove</button>
           </div>
         </div>
 
         <button type="button" class="save-products-btn" onclick="addBanner()" id="addBannerBtn" style="width:auto; padding:0 20px; margin-top:6px;">+ Add Banner</button>
-        <p class="cat-form-hint">These images slide automatically on the homepage, right below the hero section. You only need to upload one image (Desktop) — as long as it's a wide image (recommended 1920×600px, ratio ~16:5 or 3:1), it will automatically display correctly on mobile, tablet and PC. Add a separate Mobile image only if you want a specially-cropped version for small screens. If no banners are added, the section stays hidden on the site.</p>
-        <p class="cat-form-hint" style="margin-top:.3rem;">Tip: if you only want to upload one image, use a wide-safe ratio like 3:1, 16:5, or 3:2 — it will display correctly on mobile, tablet, and desktop without needing a separate mobile image.</p>
+        <p class="cat-form-hint">This image slides automatically on the homepage, right below the hero section. If no banners are added, the section stays hidden on the site.</p>
       </div>
 
       <!-- Existing Banners -->
@@ -982,14 +963,9 @@
       </div>
     </div>
     <div class="form-group">
-      <label>Colors (optional — customers will see color swatches on the product)</label>
-      <div class="color-list" id="edit-colors"></div>
-      <button type="button" class="img-upload-btn" style="margin-top:.5rem;" onclick="addColor('edit', 'edit-colors')">+ Add another color</button>
-    </div>
-    <div class="form-group" style="margin-bottom:1rem;">
-      <label>Images / Videos</label>
+      <label>Product Main Images / Videos</label>
       <div class="img-upload-row">
-        <input type="text" class="adm-input" id="editImageUrl" placeholder="Paste image/video URL here"/>
+        <input type="text" class="adm-input" id="editImageUrl" placeholder="Upload product main image or video"/>
         <button type="button" class="img-upload-btn" onclick="addMediaFromUrlInput('edit', 'editImageUrl', 'edit-media-grid')">Add URL</button>
         <label class="img-upload-btn">
           Upload
@@ -998,6 +974,11 @@
       </div>
       <div class="prog-bar-wrap" id="editUploadProg" style="display:none"><div class="prog-bar" id="editUploadBar"></div></div>
       <div class="media-thumb-grid" id="edit-media-grid"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:1rem;">
+      <label>Colors (optional — customers will see color swatches on the product)</label>
+      <div class="color-list" id="edit-colors"></div>
+      <button type="button" class="img-upload-btn" style="margin-top:.5rem;" onclick="addColor('edit', 'edit-colors')">+ Add another color</button>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary-adm" onclick="closeEditModal()">Cancel</button>
@@ -1615,15 +1596,15 @@ function renderBannersList() {
 }
 
 /* ── Staged upload handling for the "Add New Banner" form ── */
-async function handleBannerFileSelect(input, side) {
+async function handleBannerFileSelect(input) {
   const file = input.files && input.files[0];
   if (!file) return;
 
   if (file.size > 40 * 1024 * 1024) { showAdmToast(`${file.name} is too large (max 40MB)`, 'error'); return; }
   if (!file.type.startsWith('image/')) { showAdmToast(`${file.name} is not an image`, 'error'); return; }
 
-  const prog = document.getElementById(side === 'desktop' ? 'bannerDesktopProg' : 'bannerMobileProg');
-  const bar  = document.getElementById(side === 'desktop' ? 'bannerDesktopBar'  : 'bannerMobileBar');
+  const prog = document.getElementById('bannerDesktopProg');
+  const bar  = document.getElementById('bannerDesktopBar');
   prog.style.display = 'block';
 
   try {
@@ -1634,17 +1615,10 @@ async function handleBannerFileSelect(input, side) {
       token,
       pct => { bar.style.width = pct + '%'; }
     );
-    if (side === 'desktop') {
-      newBannerStaged.desktopUrl = url;
-      newBannerStaged.desktopR2Key = guessR2Key(url);
-      document.getElementById('newBannerDesktopUrl').value = url;
-      showBannerPreview('bannerDesktopPreviewWrap', 'bannerDesktopPreview', url);
-    } else {
-      newBannerStaged.mobileUrl = url;
-      newBannerStaged.mobileR2Key = guessR2Key(url);
-      document.getElementById('newBannerMobileUrl').value = url;
-      showBannerPreview('bannerMobilePreviewWrap', 'bannerMobilePreview', url);
-    }
+    newBannerStaged.desktopUrl = url;
+    newBannerStaged.desktopR2Key = guessR2Key(url);
+    document.getElementById('newBannerDesktopUrl').value = url;
+    showBannerPreview('bannerDesktopPreviewWrap', 'bannerDesktopPreview', url);
     showAdmToast('✓ Image uploaded', 'success');
   } catch (e) {
     showAdmToast('Upload failed: ' + e.message, 'error');
@@ -1661,14 +1635,13 @@ function showBannerPreview(wrapId, imgId, url) {
   wrap.style.display = 'flex';
 }
 
-async function cancelStagedBanner(side) {
-  const isDesktop  = side === 'desktop';
-  const urlInput   = document.getElementById(isDesktop ? 'newBannerDesktopUrl' : 'newBannerMobileUrl');
-  const wrap       = document.getElementById(isDesktop ? 'bannerDesktopPreviewWrap' : 'bannerMobilePreviewWrap');
-  const btn        = wrap ? wrap.querySelector('.banner-cancel-btn') : null;
+async function cancelStagedBanner() {
+  const urlInput = document.getElementById('newBannerDesktopUrl');
+  const wrap     = document.getElementById('bannerDesktopPreviewWrap');
+  const btn      = wrap ? wrap.querySelector('.banner-cancel-btn') : null;
 
-  const url = urlInput.value.trim() || (isDesktop ? newBannerStaged.desktopUrl : newBannerStaged.mobileUrl);
-  const key = (isDesktop ? newBannerStaged.desktopR2Key : newBannerStaged.mobileR2Key) || guessR2Key(url);
+  const url = urlInput.value.trim() || newBannerStaged.desktopUrl;
+  const key = newBannerStaged.desktopR2Key || guessR2Key(url);
 
   if (btn) { btn.disabled = true; btn.textContent = 'Removing...'; }
 
@@ -1686,13 +1659,8 @@ async function cancelStagedBanner(side) {
   }
 
   // Reset local state and UI regardless, so the form is clean either way
-  if (isDesktop) {
-    newBannerStaged.desktopUrl = '';
-    newBannerStaged.desktopR2Key = null;
-  } else {
-    newBannerStaged.mobileUrl = '';
-    newBannerStaged.mobileR2Key = null;
-  }
+  newBannerStaged.desktopUrl = '';
+  newBannerStaged.desktopR2Key = null;
   urlInput.value = '';
   if (wrap) wrap.style.display = 'none';
   if (btn) { btn.disabled = false; btn.textContent = '✕ Remove'; }
@@ -1700,16 +1668,17 @@ async function cancelStagedBanner(side) {
 }
 
 async function addBanner() {
-  const desktopUrlInput = document.getElementById('newBannerDesktopUrl');
-  const mobileUrlInput  = document.getElementById('newBannerMobileUrl');
+  const urlInput = document.getElementById('newBannerDesktopUrl');
 
-  // A pasted URL always wins over a previously staged upload for that side,
-  // in case the admin typed over it after uploading.
-  const desktopUrl = desktopUrlInput.value.trim() || newBannerStaged.desktopUrl;
-  const mobileUrl  = mobileUrlInput.value.trim()  || newBannerStaged.mobileUrl;
+  // A pasted URL always wins over a previously staged upload, in case the
+  // admin typed over it after uploading. Since it's now a single image for
+  // all screen sizes, the same URL is saved as both desktopUrl and mobileUrl
+  // — the frontend already falls back desktop↔mobile automatically, so a
+  // single image covers PC, tablet and mobile with no extra fields needed.
+  const url = urlInput.value.trim() || newBannerStaged.desktopUrl;
 
-  if (!desktopUrl && !mobileUrl) {
-    showAdmToast('Add at least a desktop or mobile image', 'error');
+  if (!url) {
+    showAdmToast('Add a banner image first', 'error');
     return;
   }
 
@@ -1717,20 +1686,19 @@ async function addBanner() {
   btn.disabled = true; btn.textContent = 'Adding...';
 
   try {
+    const r2Key = newBannerStaged.desktopR2Key || guessR2Key(url);
     const res = await apiFetch('/api/admin/banners', 'POST', {
-      desktopUrl,
-      desktopR2Key: newBannerStaged.desktopR2Key || guessR2Key(desktopUrl),
-      mobileUrl,
-      mobileR2Key: newBannerStaged.mobileR2Key || guessR2Key(mobileUrl),
+      desktopUrl: url,
+      desktopR2Key: r2Key,
+      mobileUrl: url,
+      mobileR2Key: r2Key,
     });
     if (res.success) {
       showAdmToast('✓ Banner added', 'success');
       // Reset the add-form
       newBannerStaged = { desktopUrl: '', desktopR2Key: null, mobileUrl: '', mobileR2Key: null };
-      desktopUrlInput.value = '';
-      mobileUrlInput.value  = '';
+      urlInput.value = '';
       document.getElementById('bannerDesktopPreviewWrap').style.display = 'none';
-      document.getElementById('bannerMobilePreviewWrap').style.display  = 'none';
       await loadBanners();
     } else {
       showAdmToast(res.error || 'Failed to add banner', 'error');
@@ -1876,14 +1844,9 @@ function renderProductForms() {
         </div>
       </div>
       <div class="form-group">
-        <label>Colors (optional — customers will see color swatches on the product)</label>
-        <div class="color-list" id="pf-colors-${i}"></div>
-        <button type="button" class="img-upload-btn" style="margin-top:.5rem;" onclick="addColor('add:${i}', 'pf-colors-${i}')">+ Add another color</button>
-      </div>
-      <div class="form-group" style="margin-bottom:0;">
-        <label>Images / Videos</label>
+        <label>Product Main Images / Videos</label>
         <div class="img-upload-row">
-          <input type="text" class="adm-input" id="pf-imgurl-${i}" placeholder="Paste image/video URL here"/>
+          <input type="text" class="adm-input" id="pf-imgurl-${i}" placeholder="Upload product main image or video"/>
           <button type="button" class="img-upload-btn" onclick="addMediaFromUrlInput('add:${i}', 'pf-imgurl-${i}', 'pf-media-grid-${i}')">Add URL</button>
           <label class="img-upload-btn">
             Upload
@@ -1893,6 +1856,11 @@ function renderProductForms() {
         <div class="prog-bar-wrap" id="pf-prog-${i}" style="display:none"><div class="prog-bar" id="pf-bar-${i}"></div></div>
         <div class="media-thumb-grid" id="pf-media-grid-${i}"></div>
       </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Colors (optional — customers will see color swatches on the product)</label>
+        <div class="color-list" id="pf-colors-${i}"></div>
+        <button type="button" class="img-upload-btn" style="margin-top:.5rem;" onclick="addColor('add:${i}', 'pf-colors-${i}')">+ Add another color</button>
+      </div>
     </div>
   `).join('');
 
@@ -1901,6 +1869,7 @@ function renderProductForms() {
     renderMediaGridGeneric(`pf-media-grid-${i}`, `add:${i}`, null);
     renderSizeChips(`pf-sizes-${i}`, `add:${i}`);
     renderSideChips(`pf-sides-${i}`, `add:${i}`);
+    if (!getColors(`add:${i}`).length) addColor(`add:${i}`, `pf-colors-${i}`, true);
     renderColorList(`pf-colors-${i}`, `add:${i}`);
   });
   cddRefresh();
@@ -2015,12 +1984,12 @@ function setColors(key, colors) {
   colorsStore[key] = colors;
 }
 
-function addColor(key, containerId) {
+function addColor(key, containerId, skipRender) {
   const colors = getColors(key);
   const id = `c${++colorIdCounter}`;
   colors.push({ id, name: '', hex: '', media: [] });
   setColors(key, colors);
-  renderColorList(containerId, key);
+  if (!skipRender) renderColorList(containerId, key);
 }
 
 function removeColor(key, colorId, containerId) {
@@ -2572,6 +2541,7 @@ async function openEditModal(id) {
     ? p.colors.map(c => ({ id: `c${++colorIdCounter}`, name: c.name || '', hex: c.hex || '', media: Array.isArray(c.media) ? [...c.media] : [] }))
     : [];
   setColors('edit', existingColors);
+  if (!existingColors.length) addColor('edit', 'edit-colors', true);
   renderColorList('edit-colors', 'edit');
 
   document.getElementById('editModal').classList.add('open');
