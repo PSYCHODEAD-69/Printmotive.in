@@ -41,6 +41,7 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.6rem;
   padding: 0 2.5rem;
   transition: background 0.35s, box-shadow 0.35s;
 }
@@ -53,14 +54,23 @@ nav.scrolled {
 /* Logo */
 .nav-logo {
   display: flex; align-items: center; gap: 0.55rem;
-  text-decoration: none; flex-shrink: 0;
+  text-decoration: none;
+  /* Shrinkable (not flex-shrink:0) so on narrow screens the logo text can
+     give up space to the login button / cart / hamburger instead of
+     pushing them off-screen. min-width:0 is required for a flex child's
+     text content to actually be allowed to shrink below its natural width. */
+  flex-shrink: 1;
+  min-width: 0;
 }
-.logo-icon { width: 36px; height: 36px;  border-radius:50%; }
+.logo-icon { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
 .logo-text {
   font-family: 'Playfair Display', serif;
   font-size: 1.55rem; font-weight: 900;
   color: var(--ink); line-height: 1;
   letter-spacing: -0.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .logo-text em { color: var(--accent); font-style: italic; }
 
@@ -894,6 +904,8 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 /* ============================================================
    NAV AUTH — Login button / user pfp dropdown
    ============================================================ */
+#navAuthSlot { flex-shrink: 0; display: flex; align-items: center; }
+
 .nav-login-btn {
   background: var(--accent); color: #fff;
   border: none; border-radius: 8px;
@@ -901,8 +913,30 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
   font-size: 0.85rem; font-weight: 700;
   cursor: pointer; transition: opacity 0.2s;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 .nav-login-btn:hover { opacity: 0.88; }
+
+/* On narrow screens (same breakpoint the hamburger appears at), shrink the
+   login button down to a compact icon-only pill so it never crowds out
+   the hamburger — brand name + login + cart + hamburger all fit in one row. */
+@media (max-width: 900px) {
+  .nav-login-btn {
+    padding: 8px 10px;
+    font-size: 0;   /* hide the text */
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .nav-login-btn::before {
+    content: '';
+    width: 16px; height: 16px;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4'/%3E%3Cpolyline points='10 17 15 12 10 7'/%3E%3Cline x1='15' y1='12' x2='3' y2='12'/%3E%3C/svg%3E") center/contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4'/%3E%3Cpolyline points='10 17 15 12 10 7'/%3E%3Cline x1='15' y1='12' x2='3' y2='12'/%3E%3C/svg%3E") center/contain no-repeat;
+    background: white;
+    display: block;
+  }
+}
 
 .nav-user-menu { position: relative; flex-shrink: 0; }
 .nav-user-pfp {
@@ -1249,6 +1283,54 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 }
 .pm-dp-confirm:hover { opacity: 0.88; }
 
+/* ── Account form: State dropdown + Pincode auto-fill/suggestions ── */
+.pm-dp-select {
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+.pm-dp-pincode-status {
+  font-size: 0.78rem; margin-top: -6px; min-height: 1.1em;
+  color: #999;
+}
+.pm-dp-pincode-status.ok  { color: #1a9c53; }
+.pm-dp-pincode-status.err { color: #c0392b; }
+
+.pm-dp-pincode-suggest { margin-top: -4px; }
+.pm-dp-suggest-label { font-size: 0.78rem; color: #888; display: block; margin-bottom: 4px; }
+.pm-dp-suggest-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pm-dp-suggest-chip {
+  background: #f5f1ea; border: 1.5px solid #e8e2d6;
+  border-radius: 20px; padding: 5px 12px;
+  font-family: inherit; font-size: 0.76rem; font-weight: 600;
+  color: #444; cursor: pointer; transition: background 0.15s, border-color 0.15s;
+}
+.pm-dp-suggest-chip:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ── Saved-details confirmation view (logged-in + profile-complete users
+   skip the blank delivery form and see this instead) ── */
+.pm-dp-saved-details {
+  background: #faf8f4;
+  border: 1.5px solid #e8e2d6;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.pm-dp-saved-row {
+  font-size: 0.88rem; color: #333; line-height: 1.45;
+}
+.pm-dp-edit-link {
+  align-self: flex-start;
+  margin-top: 6px;
+  background: none; border: none; padding: 0;
+  font-family: inherit; font-size: 0.8rem; font-weight: 700;
+  color: var(--accent); text-decoration: underline;
+  cursor: pointer;
+}
+
 /* ── MY ORDERS list (inside #pm-orders-popup) ── */
 .my-order-card {
   border: 1.5px solid #eee; border-radius: 10px;
@@ -1257,7 +1339,12 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 }
 .my-order-card .mo-date { font-size: 0.78rem; color: #999; margin-bottom: 4px; }
 .my-order-card .mo-items { font-size: 0.88rem; color: #333; margin-bottom: 6px; }
+.my-order-card .mo-item-line { margin-bottom: 2px; }
 .my-order-card .mo-total { font-size: 0.88rem; font-weight: 700; color: var(--accent); }
+
+/* Color / Size / Print Side suffix on an order item line — used in both
+   the customer "My Orders" popup and the admin Order History views. */
+.order-item-options { color: var(--accent); font-weight: 600; }
 
 /* ── CATEGORY CARDS ── */
 /* ── Search bar + Filter toggle ── */
