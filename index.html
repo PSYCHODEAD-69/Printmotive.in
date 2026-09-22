@@ -66,6 +66,7 @@
       <li><a href="#contacts">Contact us</a></li>
       <li><a href="#products" class="nav-cta">Order Now</a></li>
     </ul>
+    <div id="navAuthSlot"></div>
     <button class="nav-cart" id="cartBtn" onclick="openCart()" title="View Cart">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="22" height="22"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
       <span class="cart-count" id="cartCount"></span>
@@ -87,6 +88,18 @@
         <li><a href="#about" class="dl">About Us</a></li>
         <li><a href="#contacts" class="dl">Contact us</a></li>
         <li><a href="#products" class="dl dl-cta">Order Now</a></li>
+        <li id="drawerAccountLinks" style="display:none;">
+          <a href="#" class="dl" onclick="openAccountDetailsForm(false); return false;">My Account</a>
+        </li>
+        <li id="drawerOrdersLink" style="display:none;">
+          <a href="#" class="dl" onclick="openMyOrders(); return false;">My Orders</a>
+        </li>
+        <li id="drawerLogoutLink" style="display:none;">
+          <a href="#" class="dl" onclick="logoutUser(); return false;">Logout</a>
+        </li>
+        <li id="drawerLoginLink">
+          <a href="#" class="dl" onclick="openLoginPopup(); return false;">Login</a>
+        </li>
       </ul>
     </div>
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
@@ -480,5 +493,7 @@
   </div>
 
   <script src="script.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="auth.js"></script>
 </body>
 </html>
