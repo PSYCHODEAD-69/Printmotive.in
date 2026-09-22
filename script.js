@@ -404,6 +404,9 @@ async function loadFeaturedReviews() {
       const stars    = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
       const initials = r.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
       const date     = new Date(r.createdAt).toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
+      const avatarHtml = r.pfpUrl
+        ? `<img class="tc-avatar tc-avatar-img" src="${escapeHtml(r.pfpUrl)}" alt="${escapeHtml(r.name)}" onerror="this.outerHTML='<div class=&quot;tc-avatar&quot;>${initials}</div>'">`
+        : `<div class="tc-avatar">${initials}</div>`;
 
       // Normalize media: new `media` array, or fall back to legacy single mediaUrl fields
       const mediaList = Array.isArray(r.media) && r.media.length
@@ -432,7 +435,7 @@ async function loadFeaturedReviews() {
           <p class="tc-text">"${escapeHtml(r.text)}"</p>
           ${mediaBtn}
           <div class="tc-author">
-            <div class="tc-avatar">${initials}</div>
+            ${avatarHtml}
             <div>
               <div class="tc-name">${escapeHtml(r.name)}</div>
               <div class="tc-date">${date}</div>
