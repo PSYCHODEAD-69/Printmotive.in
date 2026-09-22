@@ -672,6 +672,14 @@ function buildGeneralWALink() {
    ORDER POPUP MODAL
    ══════════════════════════════════════ */
 function orderProduct(el, size, sides, color) {
+  // Same login gate as addToCart — no order (single-product or via any
+  // "Order Now" entry point) can proceed without a logged-in, profile-complete
+  // account. Resumes this exact call once login/profile-completion is done.
+  if (typeof requireLogin === "function" && !(typeof isLoggedIn === "function" && isLoggedIn() && pmUser && pmUser.profileComplete)) {
+    requireLogin(() => orderProduct(el, size, sides, color));
+    return;
+  }
+
   const product = el.dataset.product || "Custom Product";
   const price   = el.dataset.price   || "Contact for pricing";
   const desc    = el.dataset.desc    || "Custom print order";
@@ -1411,6 +1419,10 @@ function buildCartMsg() {
 
 function cartOrderWA() {
   if (cart.length === 0) { showToast("Cart is empty!"); return; }
+  if (typeof requireLogin === "function" && !(typeof isLoggedIn === "function" && isLoggedIn() && pmUser && pmUser.profileComplete)) {
+    requireLogin(() => cartOrderWA());
+    return;
+  }
   const total = cart.reduce((s, i) => s + i.priceNum * i.qty, 0);
   const cartMsg = buildCartMsg();
   closeCart();
@@ -1419,6 +1431,10 @@ function cartOrderWA() {
 
 function cartOrderEmail() {
   if (cart.length === 0) { showToast("Cart is empty!"); return; }
+  if (typeof requireLogin === "function" && !(typeof isLoggedIn === "function" && isLoggedIn() && pmUser && pmUser.profileComplete)) {
+    requireLogin(() => cartOrderEmail());
+    return;
+  }
   const total      = cart.reduce((s, i) => s + i.priceNum * i.qty, 0);
   const subject    = `Cart Order — ${BRAND_NAME} (Rs.${total})`;
   const emailLink  = `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(buildCartMsg())}`;
@@ -1427,24 +1443,32 @@ function cartOrderEmail() {
 }
 
 /* ══════════════════════════════════════
-   DELIVERY POPUP — naam/phone/address
-   Saves to KV via API before redirecting
+   DELIVERY POPUP — confirms delivery to the account's saved details
+   Saves to KV via API before redirecting.
+   Every caller (orderProduct, cartOrderWA/Email) is login-gated before
+   reaching here, so this only ever shows the account's saved name/phone/
+   address — there is no blank-form path anymore, since a free-typed
+   delivery form let anyone place an order with fake details and no
+   account behind it.
    ══════════════════════════════════════ */
 function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size, sides, color) {
+  // Defensive: this popup should be unreachable without a logged-in,
+  // profile-complete account — every entry point gates on that already.
+  // If something ever calls it directly without going through the gate,
+  // fail safe instead of silently falling back to a blank/untrusted form.
+  if (!(typeof isLoggedIn === "function" && isLoggedIn() && pmUser && pmUser.profileComplete)) {
+    if (typeof requireLogin === "function") {
+      requireLogin(() => showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size, sides, color));
+    }
+    return;
+  }
+
   const old = document.getElementById("pm-delivery-popup");
   if (old) old.remove();
 
-  // Logged-in + profile-complete users already have name/phone/address saved
-  // on their account — skip the blank form entirely and show a short
-  // "deliver here?" confirmation using their saved details instead, with an
-  // inline "Edit" that reveals the same fields pre-filled if they need to
-  // change something for this one order (their saved profile itself is
-  // untouched — that's only ever edited via "My Account").
-  const useSavedDetails = typeof isLoggedIn === "function" && isLoggedIn() && pmUser && pmUser.profileComplete;
-
   const popup = document.createElement("div");
   popup.id = "pm-delivery-popup";
-  popup.innerHTML = useSavedDetails ? `
+  popup.innerHTML = `
     <div class="pm-dp-backdrop"></div>
     <div class="pm-dp-box">
       <div class="pm-dp-title">📦 Confirm Delivery</div>
@@ -1466,29 +1490,11 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
         <button class="pm-dp-confirm" id="dpConfirm">Confirm &amp; Order</button>
       </div>
     </div>
-  ` : `
-    <div class="pm-dp-backdrop"></div>
-    <div class="pm-dp-box">
-      <div class="pm-dp-title">📦 Delivery Details</div>
-      <p class="pm-dp-sub">Fill in your details so we know where to deliver</p>
-      <input type="text"  id="dpName"    class="pm-dp-input" placeholder="Your Name *"         maxlength="60"/>
-      <input type="tel"   id="dpPhone"   class="pm-dp-input" placeholder="Phone Number *"      maxlength="15"/>
-      <textarea           id="dpAddress" class="pm-dp-input pm-dp-textarea" rows="2"
-        placeholder="Delivery Address *" maxlength="200"></textarea>
-      <div class="pm-dp-btns">
-        <button class="pm-dp-cancel"  id="dpCancel">Cancel</button>
-        <button class="pm-dp-confirm" id="dpConfirm">Confirm &amp; Order</button>
-      </div>
-    </div>
   `;
 
   document.body.appendChild(popup);
   document.body.style.overflow = "hidden";
   requestAnimationFrame(() => requestAnimationFrame(() => popup.classList.add("pm-dp-open")));
-
-  if (!useSavedDetails) {
-    setTimeout(() => document.getElementById("dpName")?.focus(), 350);
-  }
 
   function closePopup() {
     popup.classList.remove("pm-dp-open");
@@ -1502,24 +1508,22 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
     if (e.key === "Escape") { closePopup(); document.removeEventListener("keydown", esc); }
   });
 
-  if (useSavedDetails) {
-    popup.querySelector("#dpEditSaved")?.addEventListener("click", () => {
-      popup.querySelector("#dpSavedView").style.display = "none";
-      popup.querySelector("#dpEditFields").style.display = "block";
-      setTimeout(() => document.getElementById("dpName")?.focus(), 50);
-    });
-  }
+  popup.querySelector("#dpEditSaved")?.addEventListener("click", () => {
+    popup.querySelector("#dpSavedView").style.display = "none";
+    popup.querySelector("#dpEditFields").style.display = "block";
+    setTimeout(() => document.getElementById("dpName")?.focus(), 50);
+  });
 
   popup.querySelector("#dpConfirm").addEventListener("click", async function() {
     let name, phone, address;
 
-    // If using saved details and the user never clicked "Edit", the edit
-    // fields are hidden and still hold their pre-filled values — read from
-    // pmUser directly in that case, otherwise read whatever's in the (now
-    // visible, possibly-edited) fields.
-    const editFieldsVisible = !useSavedDetails || popup.querySelector("#dpEditFields")?.style.display !== "none";
+    // If the user never clicked "Edit", the edit fields are hidden and
+    // still hold their pre-filled values — read from pmUser directly in
+    // that case, otherwise read whatever's in the (now visible,
+    // possibly-edited) fields.
+    const editFieldsVisible = popup.querySelector("#dpEditFields")?.style.display !== "none";
 
-    if (useSavedDetails && !editFieldsVisible) {
+    if (!editFieldsVisible) {
       name    = pmUser.name;
       phone   = pmUser.phone;
       address = `${pmUser.address}, ${pmUser.city}, ${pmUser.state} - ${pmUser.pincode}`;
@@ -1545,11 +1549,11 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
     }
 
     // Save order to KV (non-blocking — don't wait for it to open WA/email).
-    // Include userId (if logged in) so the order is linked to the account's
-    // order history, and so the backend can atomically clear that user's
-    // saved cart as part of the same request.
-    const orderUserId = (typeof isLoggedIn === "function" && isLoggedIn() && pmUser) ? pmUser.id : null;
-    saveOrderToAPI({ name, phone, address, items, total, type, userId: orderUserId }).catch(() => {});
+    // pmUser.id is always present here since this popup is unreachable
+    // without a logged-in account — the order is always linked to it, so
+    // the backend can atomically clear that user's saved cart as part of
+    // the same request.
+    saveOrderToAPI({ name, phone, address, items, total, type, userId: pmUser.id }).catch(() => {});
 
     // Append delivery details to message
     function appendDetails(link) {
