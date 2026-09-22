@@ -902,77 +902,6 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 .pm-btn-ig:hover { transform: translateY(-2px); opacity: 0.9; }
 
 /* ============================================================
-   NAV AUTH — Login button / user pfp dropdown
-   ============================================================ */
-#navAuthSlot { flex-shrink: 0; display: flex; align-items: center; }
-
-.nav-login-btn {
-  background: var(--accent); color: #fff;
-  border: none; border-radius: 8px;
-  padding: 8px 16px; font-family: inherit;
-  font-size: 0.85rem; font-weight: 700;
-  cursor: pointer; transition: opacity 0.2s;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-.nav-login-btn:hover { opacity: 0.88; }
-
-/* On narrow screens (same breakpoint the hamburger appears at), shrink the
-   login button down to a compact icon-only pill so it never crowds out
-   the hamburger — brand name + login + cart + hamburger all fit in one row. */
-@media (max-width: 900px) {
-  .nav-login-btn {
-    padding: 8px 10px;
-    font-size: 0;   /* hide the text */
-    width: 34px; height: 34px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 50%;
-  }
-  .nav-login-btn::before {
-    content: '';
-    width: 16px; height: 16px;
-    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4'/%3E%3Cpolyline points='10 17 15 12 10 7'/%3E%3Cline x1='15' y1='12' x2='3' y2='12'/%3E%3C/svg%3E") center/contain no-repeat;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4'/%3E%3Cpolyline points='10 17 15 12 10 7'/%3E%3Cline x1='15' y1='12' x2='3' y2='12'/%3E%3C/svg%3E") center/contain no-repeat;
-    background: white;
-    display: block;
-  }
-}
-
-.nav-user-menu { position: relative; flex-shrink: 0; }
-.nav-user-pfp {
-  width: 34px; height: 34px; border-radius: 50%;
-  object-fit: cover; cursor: pointer;
-  border: 2px solid transparent;
-  transition: border-color 0.2s;
-}
-.nav-user-pfp:hover { border-color: var(--accent); }
-
-.nav-user-dropdown {
-  position: absolute; top: calc(100% + 10px); right: 0;
-  background: #fff; border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
-  min-width: 180px; padding: 8px;
-  display: flex; flex-direction: column;
-  opacity: 0; visibility: hidden; transform: translateY(-8px);
-  transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
-  z-index: 50;
-}
-.nav-user-dropdown.open {
-  opacity: 1; visibility: visible; transform: translateY(0);
-}
-.nud-name {
-  font-weight: 700; font-size: 0.88rem;
-  color: var(--ink); padding: 8px 10px 6px;
-  border-bottom: 1px solid #eee; margin-bottom: 4px;
-}
-.nav-user-dropdown a {
-  padding: 9px 10px; border-radius: 7px;
-  font-size: 0.85rem; color: #444;
-  text-decoration: none; transition: background 0.15s;
-}
-.nav-user-dropdown a:hover { background: #f5f5f5; color: var(--accent); }
-
-/* ============================================================
    CART ICON — NAVBAR
    ============================================================ */
 .nav-cart {
@@ -1283,15 +1212,56 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 }
 .pm-dp-confirm:hover { opacity: 0.88; }
 
-/* ── Account form: State dropdown + Pincode auto-fill/suggestions ── */
-.pm-dp-select {
-  appearance: none; -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
-  cursor: pointer;
+/* ── Account form: State dropdown (fully custom, themed — replaces the
+   native browser picker) + Pincode auto-fill/suggestions ──
+   Wraps a real <select> (kept hidden via .pm-cdd-input, still the value
+   every save/lookup function reads) with a styled trigger + options panel
+   built in our own markup, matching the storefront's warm/cream theme. */
+.pm-cdd { position: relative; width: 100%; }
+.pm-cdd .pm-cdd-input { display: none !important; }
+.pm-cdd-trigger {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: #fafafa; color: #1a1a2e;
+  border: 1.5px solid #e0e0e0; border-radius: 9px;
+  padding: 10px 13px;
+  font-size: 0.93rem; font-family: inherit;
+  cursor: pointer; user-select: none;
+  transition: border-color 0.2s;
 }
+.pm-cdd-trigger:hover { border-color: var(--accent); }
+.pm-cdd.open .pm-cdd-trigger { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,77,46,0.10); }
+.pm-cdd-trigger-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pm-cdd-trigger-arrow {
+  flex-shrink: 0; width: 16px; height: 16px;
+  transition: transform 0.15s ease;
+  stroke: #999;
+}
+.pm-cdd.open .pm-cdd-trigger-arrow { transform: rotate(180deg); }
+.pm-cdd.disabled .pm-cdd-trigger { opacity: 0.5; cursor: not-allowed; }
+
+.pm-cdd-panel {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+  background: #fff; border: 1.5px solid #e8e2d6;
+  border-radius: 10px; box-shadow: 0 12px 32px rgba(0,0,0,0.16);
+  max-height: 240px; overflow-y: auto;
+  z-index: 80;
+  opacity: 0; transform: translateY(-6px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  padding: 6px;
+}
+.pm-cdd.open .pm-cdd-panel { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
+.pm-cdd-option {
+  padding: 9px 12px; border-radius: 8px;
+  font-size: 0.9rem; color: #333;
+  cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: background 0.1s ease;
+}
+.pm-cdd-option:hover { background: #f5f1ea; }
+.pm-cdd-option.selected { background: var(--accent); color: #fff; font-weight: 600; }
+.pm-cdd-option.pm-cdd-placeholder { color: #999; }
+
 .pm-dp-pincode-status {
   font-size: 0.78rem; margin-top: -6px; min-height: 1.1em;
   color: #999;
@@ -1332,15 +1302,61 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
 }
 
 /* ── MY ORDERS list (inside #pm-orders-popup) ── */
+.pm-dp-title-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
+}
+.mo-select-toggle {
+  background: none; border: 1.5px solid #e0e0e0; border-radius: 8px;
+  padding: 6px 14px; font-family: inherit; font-size: 0.8rem; font-weight: 700;
+  color: #666; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+.mo-select-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
 .my-order-card {
   border: 1.5px solid #eee; border-radius: 10px;
   padding: 12px 14px; margin-bottom: 10px;
   text-align: left;
+  display: flex; align-items: flex-start; gap: 10px;
+  transition: border-color 0.15s, background 0.15s;
 }
+.my-order-card.mo-selectable { cursor: pointer; }
+.my-order-card.mo-selectable:hover { border-color: var(--accent); }
+.my-order-card.mo-selected { border-color: var(--accent); background: #fff5f2; }
+.my-order-card .mo-card-body { flex: 1; min-width: 0; }
 .my-order-card .mo-date { font-size: 0.78rem; color: #999; margin-bottom: 4px; }
 .my-order-card .mo-items { font-size: 0.88rem; color: #333; margin-bottom: 6px; }
 .my-order-card .mo-item-line { margin-bottom: 2px; }
 .my-order-card .mo-total { font-size: 0.88rem; font-weight: 700; color: var(--accent); }
+
+.mo-checkbox {
+  width: 22px; height: 22px; border-radius: 6px;
+  border: 1.5px solid #ccc; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 700; color: #fff;
+  background: #fff; margin-top: 2px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.my-order-card.mo-selected .mo-checkbox {
+  background: var(--accent); border-color: var(--accent);
+}
+
+.mo-bulk-bar {
+  align-items: center; justify-content: space-between;
+  gap: 10px; padding: 10px 4px 2px;
+  border-top: 1px solid #eee; margin-top: 4px;
+}
+.mo-bulk-bar span { font-size: 0.82rem; color: #666; font-weight: 600; }
+.mo-bulk-actions { display: flex; gap: 8px; }
+.mo-bulk-delete {
+  padding: 9px 18px; border: none; border-radius: 9px;
+  background: #e53935; color: #fff;
+  font-family: inherit; font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.mo-bulk-delete:hover { opacity: 0.88; }
+.mo-bulk-delete:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Color / Size / Print Side suffix on an order item line — used in both
    the customer "My Orders" popup and the admin Order History views. */
@@ -1859,6 +1875,7 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
 }
+.tc-avatar-img { object-fit: cover; background: var(--border); }
 .tc-name { font-weight: 700; font-size: 0.88rem; color: var(--ink); }
 .tc-date { font-size: 0.72rem; color: var(--muted); }
 
