@@ -146,6 +146,7 @@
       align-items: center; justify-content: center;
       font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
     }
+    .rc-av-img { object-fit: cover; background: var(--rv-border); }
     .rc-name { font-weight: 600; font-size: 0.9rem; color: var(--rv-text); }
     .rc-date { font-size: 0.78rem; color: var(--rv-muted); }
 
@@ -262,7 +263,6 @@
       <li><a href="index.html#contacts">Contact us</a></li>
       <li><a href="index.html#products" class="nav-cta">Order Now</a></li>
     </ul>
-    <div id="navAuthSlot"></div>
     <button class="hamburger" id="hamburger" aria-label="Open menu">
       <span></span><span></span><span></span>
     </button>
@@ -278,7 +278,6 @@
         <li><a href="index.html#how" class="dl">Process</a></li>
         <li><a href="reviews.html" class="dl">Reviews</a></li>
         <li><a href="index.html#contacts" class="dl">Contact us</a></li>
-        <li><a href="index.html#products" class="dl dl-cta">Order Now</a></li>
         <li id="drawerAccountLinks" style="display:none;">
           <a href="#" class="dl" onclick="openAccountDetailsForm(false); return false;">My Account</a>
         </li>
@@ -291,6 +290,7 @@
         <li id="drawerLoginLink">
           <a href="#" class="dl" onclick="openLoginPopup(); return false;">Login</a>
         </li>
+        <li><a href="index.html#products" class="dl dl-cta">Order Now</a></li>
       </ul>
     </div>
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
@@ -640,6 +640,9 @@
       const stars   = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
       const initials= r.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
       const date    = new Date(r.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+      const avatarHtml = r.pfpUrl
+        ? `<img class="rc-av rc-av-img" src="${escapeHtml(r.pfpUrl)}" alt="${escapeHtml(r.name)}" onerror="this.outerHTML='<div class=&quot;rc-av&quot;>${initials}</div>'">`
+        : `<div class="rc-av">${initials}</div>`;
 
       // Normalize media: new `media` array, or fall back to legacy single mediaUrl fields
       const mediaList = Array.isArray(r.media) && r.media.length
@@ -682,7 +685,7 @@
           ${mediaHtml}
           <p class="rc-text">"${escapeHtml(r.text)}"</p>
           <div class="rc-author">
-            <div class="rc-av">${initials}</div>
+            ${avatarHtml}
             <div>
               <div class="rc-name">${escapeHtml(r.name)}</div>
               <div class="rc-date">${date}</div>
