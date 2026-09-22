@@ -1431,9 +1431,39 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
   const old = document.getElementById("pm-delivery-popup");
   if (old) old.remove();
 
+  // Logged-in + profile-complete users already have name/phone/address saved
+  // on their account — skip the blank form entirely and show a short
+  // "deliver here?" confirmation using their saved details instead, with an
+  // inline "Edit" that reveals the same fields pre-filled if they need to
+  // change something for this one order (their saved profile itself is
+  // untouched — that's only ever edited via "My Account").
+  const useSavedDetails = typeof isLoggedIn === "function" && isLoggedIn() && pmUser && pmUser.profileComplete;
+
   const popup = document.createElement("div");
   popup.id = "pm-delivery-popup";
-  popup.innerHTML = `
+  popup.innerHTML = useSavedDetails ? `
+    <div class="pm-dp-backdrop"></div>
+    <div class="pm-dp-box">
+      <div class="pm-dp-title">📦 Confirm Delivery</div>
+      <p class="pm-dp-sub">We'll deliver to your saved details:</p>
+      <div class="pm-dp-saved-details" id="dpSavedView">
+        <div class="pm-dp-saved-row"><strong>${escapeHtml(pmUser.name)}</strong></div>
+        <div class="pm-dp-saved-row">${escapeHtml(pmUser.phone)}</div>
+        <div class="pm-dp-saved-row">${escapeHtml(pmUser.address)}, ${escapeHtml(pmUser.city)}, ${escapeHtml(pmUser.state)} - ${escapeHtml(pmUser.pincode)}</div>
+        <button type="button" class="pm-dp-edit-link" id="dpEditSaved">Edit details for this order</button>
+      </div>
+      <div id="dpEditFields" style="display:none;">
+        <input type="text"  id="dpName"    class="pm-dp-input" placeholder="Your Name *"         maxlength="60"  value="${escapeHtml(pmUser.name)}"/>
+        <input type="tel"   id="dpPhone"   class="pm-dp-input" placeholder="Phone Number *"      maxlength="15"  value="${escapeHtml(pmUser.phone)}"/>
+        <textarea            id="dpAddress" class="pm-dp-input pm-dp-textarea" rows="2"
+          placeholder="Delivery Address *" maxlength="200">${escapeHtml(pmUser.address)}, ${escapeHtml(pmUser.city)}, ${escapeHtml(pmUser.state)} - ${escapeHtml(pmUser.pincode)}</textarea>
+      </div>
+      <div class="pm-dp-btns">
+        <button class="pm-dp-cancel"  id="dpCancel">Cancel</button>
+        <button class="pm-dp-confirm" id="dpConfirm">Confirm &amp; Order</button>
+      </div>
+    </div>
+  ` : `
     <div class="pm-dp-backdrop"></div>
     <div class="pm-dp-box">
       <div class="pm-dp-title">📦 Delivery Details</div>
@@ -1453,7 +1483,9 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
   document.body.style.overflow = "hidden";
   requestAnimationFrame(() => requestAnimationFrame(() => popup.classList.add("pm-dp-open")));
 
-  setTimeout(() => document.getElementById("dpName")?.focus(), 350);
+  if (!useSavedDetails) {
+    setTimeout(() => document.getElementById("dpName")?.focus(), 350);
+  }
 
   function closePopup() {
     popup.classList.remove("pm-dp-open");
@@ -1467,10 +1499,32 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
     if (e.key === "Escape") { closePopup(); document.removeEventListener("keydown", esc); }
   });
 
+  if (useSavedDetails) {
+    popup.querySelector("#dpEditSaved")?.addEventListener("click", () => {
+      popup.querySelector("#dpSavedView").style.display = "none";
+      popup.querySelector("#dpEditFields").style.display = "block";
+      setTimeout(() => document.getElementById("dpName")?.focus(), 50);
+    });
+  }
+
   popup.querySelector("#dpConfirm").addEventListener("click", async function() {
-    const name    = (document.getElementById("dpName")?.value    || "").trim();
-    const phone   = (document.getElementById("dpPhone")?.value   || "").trim();
-    const address = (document.getElementById("dpAddress")?.value || "").trim();
+    let name, phone, address;
+
+    // If using saved details and the user never clicked "Edit", the edit
+    // fields are hidden and still hold their pre-filled values — read from
+    // pmUser directly in that case, otherwise read whatever's in the (now
+    // visible, possibly-edited) fields.
+    const editFieldsVisible = !useSavedDetails || popup.querySelector("#dpEditFields")?.style.display !== "none";
+
+    if (useSavedDetails && !editFieldsVisible) {
+      name    = pmUser.name;
+      phone   = pmUser.phone;
+      address = `${pmUser.address}, ${pmUser.city}, ${pmUser.state} - ${pmUser.pincode}`;
+    } else {
+      name    = (document.getElementById("dpName")?.value    || "").trim();
+      phone   = (document.getElementById("dpPhone")?.value   || "").trim();
+      address = (document.getElementById("dpAddress")?.value || "").trim();
+    }
 
     if (!name)    { showToast("Please enter your name!");             document.getElementById("dpName")?.focus();    return; }
     if (!phone)   { showToast("Please enter your phone number!");     document.getElementById("dpPhone")?.focus();   return; }
@@ -1698,6 +1752,24 @@ function escapeHtml(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+/* Builds the "(Color: X | Size: Y | Print Side: Z)" suffix for one order
+   item, shown next to the product name in order history — both the
+   customer's "My Orders" popup and the admin panel's Order History /
+   User Detail views. Only options the product actually had (and the
+   customer picked) are shown — a mug with no print-side option just
+   shows nothing extra there, exactly as it was ordered. Shared here
+   (script.js loads before auth.js) so both files render this identically. */
+function orderItemOptionsHtml(item) {
+  const bits = [];
+  if (item.color) bits.push(`Color: ${escapeHtml(item.color)}`);
+  if (item.size)  bits.push(`Size: ${escapeHtml(item.size)}`);
+  if (Array.isArray(item.sides) && item.sides.length) {
+    bits.push(`Print Side: ${item.sides.map(escapeHtml).join(", ")}`);
+  }
+  if (!bits.length) return "";
+  return ` <span class="order-item-options">(${bits.join(" | ")})</span>`;
 }
 
 /* ══════════════════════════════════════
