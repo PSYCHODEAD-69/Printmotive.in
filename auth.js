@@ -267,14 +267,17 @@ function closeLoginPopup() {
 }
 
 /* ══════════════════════════════════════
-   NAV BAR — login-related drawer link visibility
-   Login/account UI lives only in the hamburger drawer (index.html and
-   reviews.html both share the same #drawerAccountLinks/#drawerOrdersLink/
-   #drawerLogoutLink/#drawerLoginLink ids) — no navbar slot to render into.
+   NAV BAR — login chip / pfp dropdown (desktop) + drawer link visibility
+   Desktop (≥900px): renders into #navAuthSlot — an outline "Login" chip,
+   or the user's pfp with a My Account/My Orders/Logout dropdown once
+   logged in.
+   Mobile (<900px): #navAuthSlot is hidden by CSS; login/account only
+   ever shows via the hamburger drawer links
+   (#drawerAccountLinks/#drawerOrdersLink/#drawerLogoutLink/#drawerLoginLink).
    ══════════════════════════════════════ */
 function renderNavAuthUI() {
-  // Login/account UI lives only in the hamburger drawer now (on both
-  // desktop and mobile) — no navbar slot to render into.
+  // Drawer links — used on mobile (and as a fallback everywhere the drawer
+  // is open), independent of the desktop navAuthSlot below.
   const drawerAccount = document.getElementById("drawerAccountLinks");
   const drawerOrders  = document.getElementById("drawerOrdersLink");
   const drawerLogout  = document.getElementById("drawerLogoutLink");
@@ -285,7 +288,39 @@ function renderNavAuthUI() {
   if (drawerOrders)  drawerOrders.style.display  = loggedIn ? "" : "none";
   if (drawerLogout)  drawerLogout.style.display  = loggedIn ? "" : "none";
   if (drawerLogin)   drawerLogin.style.display   = loggedIn ? "none" : "";
+
+  // Desktop navbar slot — hidden entirely below 900px via CSS, so this is
+  // effectively a no-op visually on mobile even though it still renders.
+  const slot = document.getElementById("navAuthSlot");
+  if (!slot) return;
+
+  if (!loggedIn) {
+    slot.innerHTML = `<button class="nav-login-chip" onclick="openLoginPopup()">Login</button>`;
+    return;
+  }
+
+  slot.innerHTML = `
+    <div class="nav-user-menu">
+      <img src="${escapeHtml(pmUser.pfpUrl || '')}" alt="${escapeHtml(pmUser.name || 'Account')}" class="nav-user-pfp" onclick="toggleNavUserDropdown()"/>
+      <div class="nav-user-dropdown" id="navUserDropdown">
+        <div class="nud-name">${escapeHtml(pmUser.name || '')}</div>
+        <a href="#" onclick="openAccountDetailsForm(false); closeNavUserDropdown(); return false;">My Account</a>
+        <a href="#" onclick="openMyOrders(); closeNavUserDropdown(); return false;">My Orders</a>
+        <a href="#" onclick="logoutUser(); closeNavUserDropdown(); return false;">Logout</a>
+      </div>
+    </div>`;
 }
+
+function toggleNavUserDropdown() {
+  document.getElementById("navUserDropdown")?.classList.toggle("open");
+}
+function closeNavUserDropdown() {
+  document.getElementById("navUserDropdown")?.classList.remove("open");
+}
+document.addEventListener("click", (e) => {
+  const menu = document.querySelector(".nav-user-menu");
+  if (menu && !menu.contains(e.target)) closeNavUserDropdown();
+});
 
 /* ══════════════════════════════════════
    MY ACCOUNT — complete/edit details
