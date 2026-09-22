@@ -262,6 +262,7 @@
       <li><a href="index.html#contacts">Contact us</a></li>
       <li><a href="index.html#products" class="nav-cta">Order Now</a></li>
     </ul>
+    <div id="navAuthSlot"></div>
     <button class="hamburger" id="hamburger" aria-label="Open menu">
       <span></span><span></span><span></span>
     </button>
@@ -278,6 +279,18 @@
         <li><a href="reviews.html" class="dl">Reviews</a></li>
         <li><a href="index.html#contacts" class="dl">Contact us</a></li>
         <li><a href="index.html#products" class="dl dl-cta">Order Now</a></li>
+        <li id="drawerAccountLinks" style="display:none;">
+          <a href="#" class="dl" onclick="openAccountDetailsForm(false); return false;">My Account</a>
+        </li>
+        <li id="drawerOrdersLink" style="display:none;">
+          <a href="#" class="dl" onclick="openMyOrders(); return false;">My Orders</a>
+        </li>
+        <li id="drawerLogoutLink" style="display:none;">
+          <a href="#" class="dl" onclick="logoutUser(); return false;">Logout</a>
+        </li>
+        <li id="drawerLoginLink">
+          <a href="#" class="dl" onclick="openLoginPopup(); return false;">Login</a>
+        </li>
       </ul>
     </div>
     <div class="drawer-backdrop" id="drawerBackdrop"></div>
@@ -307,7 +320,9 @@
         </div>
       </div>
 
-      <input type="text" class="rev-input" id="revName" placeholder="Your Name *" maxlength="60" autocomplete="name"/>
+      <div class="rev-input" id="revNameDisplay" style="display:flex;align-items:center;gap:8px;color:#555;">
+        <span id="revNameText">Log in to post a review</span>
+      </div>
       <textarea class="rev-input" id="revText" placeholder="Tell us about your experience... *" maxlength="1000"></textarea>
 
       <!-- File Upload -->
@@ -371,30 +386,43 @@
 
   <script>
     const API = window.PM_API_URL || 'https://api.printmotive.in';
+    const PM_API = API; // auth.js (shared with index.html) expects this exact global name
     let selectedRating = 0;
     let selectedFiles  = [];
 
     /* ── INIT ── */
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       initNavbar();
       initHamburger();
       initWALinks();
       loadReviews();
       initStarPicker();
       initFileUpload();
+      if (typeof initAuth === 'function') { await initAuth(); }
+      updateRevNameDisplay();
 
-      // If ?focus=add in URL, scroll to form and focus name input
+      // If ?focus=add in URL, scroll to form and focus the review text box
       if (new URLSearchParams(location.search).get('focus') === 'add') {
         setTimeout(() => {
           document.getElementById('addReviewSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => document.getElementById('revName').focus(), 600);
+          setTimeout(() => document.getElementById('revText').focus(), 600);
         }, 300);
       }
     });
 
+    // Shows the logged-in user's name above the review text box, or a
+    // "log in" prompt if not logged in — name is never freely typed.
+    function updateRevNameDisplay() {
+      const el = document.getElementById('revNameText');
+      if (!el) return;
+      el.textContent = (typeof isLoggedIn === 'function' && isLoggedIn() && pmUser)
+        ? `Posting as ${pmUser.name}`
+        : 'Log in to post a review';
+    }
+
     function scrollToForm() {
       document.getElementById('addReviewSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => document.getElementById('revName').focus(), 500);
+      setTimeout(() => document.getElementById('revText').focus(), 500);
     }
 
     /* ── STAR PICKER ── */
@@ -470,12 +498,23 @@
 
     /* ── SUBMIT REVIEW ── */
     async function submitReview() {
-      const name   = document.getElementById('revName').value.trim();
+      // Reviews require login — see plan: only genuine logged-in accounts
+      // can post, name comes from the verified Google account, not typed
+      // input, to cut down on fake/spam reviews.
+      if (typeof isLoggedIn !== 'function' || !isLoggedIn()) {
+        if (typeof openLoginPopup === 'function') {
+          window.__pmPostLoginAction = submitReview;
+          openLoginPopup();
+        } else {
+          showToast('Please log in to submit a review.');
+        }
+        return;
+      }
+
       const text   = document.getElementById('revText').value.trim();
       const btn    = document.getElementById('submitReviewBtn');
 
       if (!selectedRating) { showToast('Please select a star rating!'); return; }
-      if (!name)           { showToast('Please enter your name!'); document.getElementById('revName').focus(); return; }
       if (!text)           { showToast('Please write your review!'); document.getElementById('revText').focus(); return; }
 
       btn.disabled = true;
@@ -500,17 +539,16 @@
       }
 
       try {
-        const res = await fetch(`${API}/api/reviews`, {
+        const res = await userFetch('/api/reviews', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, rating: selectedRating, text, media })
+          body: JSON.stringify({ rating: selectedRating, text, media })
         });
         const data = await res.json();
 
         if (data.success) {
           showToast('✓ Review submitted! Thank you!');
           // Reset form
-          document.getElementById('revName').value = '';
           document.getElementById('revText').value = '';
           selectedRating = 0;
           selectedFiles  = [];
@@ -789,5 +827,7 @@
       ['floatWA','footerWA'].forEach(id => { const el = document.getElementById(id); if(el) el.href = link; });
     }
   </script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="auth.js"></script>
 </body>
 </html>
