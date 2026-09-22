@@ -746,7 +746,7 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
   /* Hide desktop links, show hamburger */
   .nav-links   { display: none; }
   .hamburger   { display: flex; }
-  #navAuthSlot { display: none; }
+  #navAuthSlot { display: none !important; }
 
   #hero { grid-template-columns: 1fr; padding: 3rem 1.4rem; }
   .hero-right  { display: none; }
