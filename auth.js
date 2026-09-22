@@ -23,7 +23,83 @@ const INDIA_STATES = [
   "Ladakh", "Lakshadweep", "Puducherry",
 ];
 
-/* ── SESSION STATE ── */
+/* ══════════════════════════════════════
+   PM-CDD — Custom themed dropdown (storefront)
+   Same pattern as admin.html's CDD engine: wraps a real <select> (kept
+   hidden, still the source of truth for every .value read/write already
+   in this file) with a styled trigger + options panel matching the
+   storefront's warm/cream theme, instead of the native browser picker.
+   ══════════════════════════════════════ */
+const PM_CDD_ARROW = `<svg class="pm-cdd-trigger-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+
+function pmCddBuild(select) {
+  if (!select || select.dataset.cddBound === "1") return;
+  select.dataset.cddBound = "1";
+
+  const wrap = document.createElement("div");
+  wrap.className = "pm-cdd";
+  select.parentNode.insertBefore(wrap, select);
+  wrap.appendChild(select);
+
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "pm-cdd-trigger";
+  trigger.innerHTML = `<span class="pm-cdd-trigger-label"></span>${PM_CDD_ARROW}`;
+  wrap.appendChild(trigger);
+
+  const panel = document.createElement("div");
+  panel.className = "pm-cdd-panel";
+  wrap.appendChild(panel);
+
+  function sync() {
+    const opts = Array.from(select.options);
+    panel.innerHTML = opts.map(o => `
+      <div class="pm-cdd-option ${o.selected ? 'selected' : ''} ${!o.value ? 'pm-cdd-placeholder' : ''}" data-value="${o.value.replace(/"/g, '&quot;')}">${o.textContent}</div>
+    `).join("");
+    const current = opts.find(o => o.selected) || opts[0];
+    trigger.querySelector(".pm-cdd-trigger-label").textContent = current ? current.textContent : "";
+    wrap.classList.toggle("disabled", select.disabled);
+  }
+
+  function open() {
+    if (select.disabled) return;
+    document.querySelectorAll(".pm-cdd.open").forEach(o => { if (o !== wrap) o.classList.remove("open"); });
+    sync();
+    wrap.classList.add("open");
+  }
+  function close() { wrap.classList.remove("open"); }
+
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    wrap.classList.contains("open") ? close() : open();
+  });
+
+  panel.addEventListener("click", (e) => {
+    const opt = e.target.closest(".pm-cdd-option");
+    if (!opt) return;
+    select.value = opt.dataset.value;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    sync();
+    close();
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!wrap.contains(e.target)) close();
+  });
+
+  // Expose so code that sets select.value programmatically (pincode
+  // auto-fill etc.) can force the trigger label + panel to re-sync.
+  select._cddSync = sync;
+  sync();
+}
+
+function pmCddSync(select) {
+  if (select && select._cddSync) select._cddSync();
+}
+
+/* ══════════════════════════════════════
+   SESSION STATE
+   ══════════════════════════════════════ */
 let pmUser = null; // { id, name, email, pfpUrl, phone, state, city, pincode, address, profileComplete }
 
 function getUserToken() {
@@ -191,11 +267,14 @@ function closeLoginPopup() {
 }
 
 /* ══════════════════════════════════════
-   NAV BAR — login button / pfp dropdown
-   Expects a container <div id="navAuthSlot"></div> in index.html's navbar.
+   NAV BAR — login-related drawer link visibility
+   Login/account UI lives only in the hamburger drawer (index.html and
+   reviews.html both share the same #drawerAccountLinks/#drawerOrdersLink/
+   #drawerLogoutLink/#drawerLoginLink ids) — no navbar slot to render into.
    ══════════════════════════════════════ */
 function renderNavAuthUI() {
-  const slot = document.getElementById("navAuthSlot");
+  // Login/account UI lives only in the hamburger drawer now (on both
+  // desktop and mobile) — no navbar slot to render into.
   const drawerAccount = document.getElementById("drawerAccountLinks");
   const drawerOrders  = document.getElementById("drawerOrdersLink");
   const drawerLogout  = document.getElementById("drawerLogoutLink");
@@ -206,36 +285,7 @@ function renderNavAuthUI() {
   if (drawerOrders)  drawerOrders.style.display  = loggedIn ? "" : "none";
   if (drawerLogout)  drawerLogout.style.display  = loggedIn ? "" : "none";
   if (drawerLogin)   drawerLogin.style.display   = loggedIn ? "none" : "";
-
-  if (!slot) return;
-
-  if (!loggedIn) {
-    slot.innerHTML = `<button class="nav-login-btn" onclick="openLoginPopup()">Login</button>`;
-    return;
-  }
-
-  slot.innerHTML = `
-    <div class="nav-user-menu">
-      <img src="${escapeHtml(pmUser.pfpUrl || '')}" alt="${escapeHtml(pmUser.name || 'Account')}" class="nav-user-pfp" onclick="toggleNavUserDropdown()"/>
-      <div class="nav-user-dropdown" id="navUserDropdown">
-        <div class="nud-name">${escapeHtml(pmUser.name || '')}</div>
-        <a href="#" onclick="openAccountDetailsForm(false); closeNavUserDropdown(); return false;">My Account</a>
-        <a href="#" onclick="openMyOrders(); closeNavUserDropdown(); return false;">My Orders</a>
-        <a href="#" onclick="logoutUser(); closeNavUserDropdown(); return false;">Logout</a>
-      </div>
-    </div>`;
 }
-
-function toggleNavUserDropdown() {
-  document.getElementById("navUserDropdown")?.classList.toggle("open");
-}
-function closeNavUserDropdown() {
-  document.getElementById("navUserDropdown")?.classList.remove("open");
-}
-document.addEventListener("click", (e) => {
-  const menu = document.querySelector(".nav-user-menu");
-  if (menu && !menu.contains(e.target)) closeNavUserDropdown();
-});
 
 /* ══════════════════════════════════════
    MY ACCOUNT — complete/edit details
@@ -259,7 +309,7 @@ function openAccountDetailsForm(isFirstTime) {
       <input type="tel"  id="accPhone"   class="pm-dp-input" placeholder="Phone Number *" maxlength="15"  value="${escapeHtml(u.phone || '')}"/>
       <input type="tel"  id="accPincode" class="pm-dp-input" placeholder="Pincode *"      maxlength="6"   value="${escapeHtml(u.pincode || '')}"/>
       <div id="accPincodeStatus" class="pm-dp-pincode-status"></div>
-      <select id="accState" class="pm-dp-input pm-dp-select">${stateOptionsHtml}</select>
+      <select id="accState" class="pm-dp-input pm-cdd-input">${stateOptionsHtml}</select>
       <input type="text" id="accCity"    class="pm-dp-input" placeholder="City *"         maxlength="60"  value="${escapeHtml(u.city || '')}"/>
       <div id="accPincodeSuggest" class="pm-dp-pincode-suggest"></div>
       <textarea id="accAddress" class="pm-dp-input pm-dp-textarea" rows="2" placeholder="Full Address *" maxlength="200">${escapeHtml(u.address || '')}</textarea>
@@ -272,6 +322,7 @@ function openAccountDetailsForm(isFirstTime) {
   document.body.appendChild(popup);
   document.body.style.overflow = "hidden";
   requestAnimationFrame(() => requestAnimationFrame(() => popup.classList.add("pm-dp-open")));
+  pmCddBuild(popup.querySelector("#accState"));
 
   function closeAcc() {
     popup.classList.remove("pm-dp-open");
@@ -313,6 +364,7 @@ function openAccountDetailsForm(isFirstTime) {
       const po = result.PostOffice[0];
       if (po.State && INDIA_STATES.includes(po.State)) {
         stateSelect.value = po.State;
+        pmCddSync(stateSelect);
       }
       cityInput.value = po.District || po.Block || po.Name || cityInput.value;
       pincodeStatus.textContent = `✓ ${po.District || ''}${po.State ? ', ' + po.State : ''}`;
@@ -414,18 +466,35 @@ function openAccountDetailsForm(isFirstTime) {
 /* ══════════════════════════════════════
    MY ORDERS
    ══════════════════════════════════════ */
+let myOrdersData       = [];  // last loaded orders, kept so re-renders don't need a refetch
+let myOrdersSelectMode = false;
+let myOrdersSelectedIds = new Set();
+
 async function openMyOrders() {
   const old = document.getElementById("pm-orders-popup");
   if (old) old.remove();
+
+  myOrdersSelectMode = false;
+  myOrdersSelectedIds = new Set();
 
   const popup = document.createElement("div");
   popup.id = "pm-orders-popup";
   popup.innerHTML = `
     <div class="pm-dp-backdrop"></div>
     <div class="pm-dp-box" style="max-height:80vh;overflow-y:auto;">
-      <div class="pm-dp-title">My Orders</div>
+      <div class="pm-dp-title-row">
+        <div class="pm-dp-title">My Orders</div>
+        <button class="mo-select-toggle" id="ordersSelectToggle" style="display:none;">Select</button>
+      </div>
       <div id="myOrdersList" class="pm-dp-sub">Loading...</div>
-      <div class="pm-dp-btns"><button class="pm-dp-cancel" id="ordersClose">Close</button></div>
+      <div class="mo-bulk-bar" id="ordersBulkBar" style="display:none;">
+        <span id="ordersBulkCount">0 selected</span>
+        <div class="mo-bulk-actions">
+          <button class="pm-dp-cancel" id="ordersBulkCancel">Cancel</button>
+          <button class="mo-bulk-delete" id="ordersBulkDelete" disabled>Delete</button>
+        </div>
+      </div>
+      <div class="pm-dp-btns" id="ordersCloseRow"><button class="pm-dp-cancel" id="ordersClose">Close</button></div>
     </div>
   `;
   document.body.appendChild(popup);
@@ -439,26 +508,101 @@ async function openMyOrders() {
   }
   popup.querySelector("#ordersClose").addEventListener("click", closeOrders);
   popup.querySelector(".pm-dp-backdrop").addEventListener("click", closeOrders);
+  popup.querySelector("#ordersSelectToggle").addEventListener("click", () => {
+    myOrdersSelectMode = !myOrdersSelectMode;
+    myOrdersSelectedIds = new Set();
+    renderMyOrdersList();
+  });
+  popup.querySelector("#ordersBulkCancel").addEventListener("click", () => {
+    myOrdersSelectMode = false;
+    myOrdersSelectedIds = new Set();
+    renderMyOrdersList();
+  });
+  popup.querySelector("#ordersBulkDelete").addEventListener("click", deleteSelectedMyOrders);
 
   try {
     const res    = await userFetch("/api/user/orders");
     const orders = await res.json();
-    const list   = document.getElementById("myOrdersList");
-    if (!Array.isArray(orders) || orders.length === 0) {
-      list.innerHTML = `<p>No orders yet.</p>`;
-      return;
-    }
-    list.innerHTML = orders.map(o => `
-      <div class="my-order-card">
+    myOrdersData = Array.isArray(orders) ? orders : [];
+    renderMyOrdersList();
+  } catch {
+    document.getElementById("myOrdersList").innerHTML = `<p>Could not load orders.</p>`;
+  }
+}
+
+function renderMyOrdersList() {
+  const list        = document.getElementById("myOrdersList");
+  const toggleBtn    = document.getElementById("ordersSelectToggle");
+  const bulkBar       = document.getElementById("ordersBulkBar");
+  const closeRow      = document.getElementById("ordersCloseRow");
+  if (!list) return;
+
+  if (!myOrdersData.length) {
+    list.innerHTML = `<p>No orders yet.</p>`;
+    if (toggleBtn) toggleBtn.style.display = "none";
+    if (bulkBar) bulkBar.style.display = "none";
+    if (closeRow) closeRow.style.display = "flex";
+    return;
+  }
+
+  if (toggleBtn) {
+    toggleBtn.style.display = "inline-block";
+    toggleBtn.textContent = myOrdersSelectMode ? "Cancel" : "Select";
+  }
+  if (bulkBar) bulkBar.style.display = myOrdersSelectMode ? "flex" : "none";
+  if (closeRow) closeRow.style.display = myOrdersSelectMode ? "none" : "flex";
+
+  list.innerHTML = myOrdersData.map(o => `
+    <div class="my-order-card ${myOrdersSelectMode ? 'mo-selectable' : ''} ${myOrdersSelectedIds.has(o.id) ? 'mo-selected' : ''}"
+         ${myOrdersSelectMode ? `onclick="toggleMyOrderSelect('${escapeHtml(o.id)}')"` : ''}>
+      ${myOrdersSelectMode ? `<div class="mo-checkbox">${myOrdersSelectedIds.has(o.id) ? '✓' : ''}</div>` : ''}
+      <div class="mo-card-body">
         <div class="mo-date">${new Date(o.createdAt).toLocaleDateString()}</div>
         <div class="mo-items">
           ${(o.items || []).map(i => `<div class="mo-item-line">${escapeHtml(i.product)}${orderItemOptionsHtml(i)} x${i.qty}</div>`).join("")}
         </div>
         <div class="mo-total">Total: Rs.${o.total}</div>
       </div>
-    `).join("");
+    </div>
+  `).join("");
+
+  updateMyOrdersBulkBar();
+}
+
+function toggleMyOrderSelect(id) {
+  if (myOrdersSelectedIds.has(id)) myOrdersSelectedIds.delete(id);
+  else myOrdersSelectedIds.add(id);
+  renderMyOrdersList();
+}
+
+function updateMyOrdersBulkBar() {
+  const count = myOrdersSelectedIds.size;
+  const countEl = document.getElementById("ordersBulkCount");
+  const delBtn  = document.getElementById("ordersBulkDelete");
+  if (countEl) countEl.textContent = `${count} selected`;
+  if (delBtn)  delBtn.disabled = count === 0;
+}
+
+async function deleteSelectedMyOrders() {
+  const ids = [...myOrdersSelectedIds];
+  if (!ids.length) return;
+
+  try {
+    const res  = await userFetch("/api/user/orders/hide", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    const data = await res.json();
+    if (!data.success) { showToast(data.error || "Could not delete orders."); return; }
+
+    myOrdersData = myOrdersData.filter(o => !ids.includes(o.id));
+    myOrdersSelectMode = false;
+    myOrdersSelectedIds = new Set();
+    renderMyOrdersList();
+    showToast(`${data.hiddenCount} order(s) removed.`);
   } catch {
-    document.getElementById("myOrdersList").innerHTML = `<p>Could not load orders.</p>`;
+    showToast("Network error — please try again.");
   }
 }
 
