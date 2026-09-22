@@ -1257,6 +1257,12 @@ let cart = [];
 
 function saveCart() {
   localStorage.setItem("pm_cart", JSON.stringify(cart));
+  // If logged in, the server-side cart (tied to the account) is the
+  // source of truth — mirror every local change there too so it's
+  // available across devices. See auth.js.
+  if (typeof isLoggedIn === "function" && isLoggedIn()) {
+    persistCartToServer();
+  }
 }
 
 function loadCart() {
@@ -1267,6 +1273,14 @@ function loadCart() {
 }
 
 function addToCart(el, size, sides, color) {
+  // Login is required before anything goes into the cart. If not logged
+  // in (or profile incomplete), show the login/details popup and resume
+  // this exact add-to-cart call once that's done.
+  if (typeof requireLogin === "function" && !(typeof isLoggedIn === "function" && isLoggedIn() && pmUser && pmUser.profileComplete)) {
+    requireLogin(() => addToCart(el, size, sides, color));
+    return;
+  }
+
   const product  = el.dataset.product;
   const price    = el.dataset.price;
   const desc     = el.dataset.desc;
@@ -1473,8 +1487,12 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
       total = parseInt((price || "0").replace(/[^0-9]/g, "")) || 0;
     }
 
-    // Save order to KV (non-blocking — don't wait for it to open WA/email)
-    saveOrderToAPI({ name, phone, address, items, total, type }).catch(() => {});
+    // Save order to KV (non-blocking — don't wait for it to open WA/email).
+    // Include userId (if logged in) so the order is linked to the account's
+    // order history, and so the backend can atomically clear that user's
+    // saved cart as part of the same request.
+    const orderUserId = (typeof isLoggedIn === "function" && isLoggedIn() && pmUser) ? pmUser.id : null;
+    saveOrderToAPI({ name, phone, address, items, total, type, userId: orderUserId }).catch(() => {});
 
     // Append delivery details to message
     function appendDetails(link) {
@@ -1494,7 +1512,14 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
     if (type === "wa"    && waLink)    window.open(appendDetails(waLink), "_blank");
     if (type === "email" && emailLink) window.open(appendDetails(emailLink));
 
-    if (isCart) { cart = []; saveCart(); updateCartBadge(); }
+    if (isCart) {
+      cart = [];
+      localStorage.setItem("pm_cart", JSON.stringify(cart)); // local mirror only —
+      // server-side cart for logged-in users was already cleared atomically
+      // inside the order-save endpoint (see backend saveOrder()), so we
+      // deliberately do NOT call persistCartToServer()/saveCart() here.
+      updateCartBadge();
+    }
     closePopup();
   });
 }
@@ -1678,7 +1703,7 @@ function escapeHtml(s) {
 /* ══════════════════════════════════════
    BOOT
    ══════════════════════════════════════ */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   loadCart();
   updateCartBadge();
   initWALinks();
@@ -1688,6 +1713,11 @@ document.addEventListener("DOMContentLoaded", () => {
   initMarquee();
   initSmoothScroll();
   initCounters();
+
+  // Auth (Google login, nav UI, server-side cart sync) — see auth.js.
+  // Runs after loadCart() so a logged-in user's server cart (if any)
+  // overrides the local guest cart once the session is confirmed.
+  if (typeof initAuth === "function") { await initAuth(); }
 
   // Dynamic data from API
   loadProducts();
