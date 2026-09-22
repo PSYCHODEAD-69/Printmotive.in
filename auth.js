@@ -9,6 +9,20 @@
 const GOOGLE_CLIENT_ID = "441215419334-p3hgrb6sms0om767hmijpdbin017t7jf.apps.googleusercontent.com";
 // PM_API is already defined in script.js (loaded before this file), reused here.
 
+/* Fixed list of Indian states + union territories — doesn't change, so it's
+   hardcoded rather than fetched. Used to populate the State dropdown in
+   the account details form. */
+const INDIA_STATES = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
+  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
+  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+  "Andaman and Nicobar Islands", "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir",
+  "Ladakh", "Lakshadweep", "Puducherry",
+];
+
 /* ── SESSION STATE ── */
 let pmUser = null; // { id, name, email, pfpUrl, phone, state, city, pincode, address, profileComplete }
 
@@ -231,6 +245,9 @@ function openAccountDetailsForm(isFirstTime) {
   if (old) old.remove();
 
   const u = pmUser || {};
+  const stateOptionsHtml = `<option value="">Select State *</option>` +
+    INDIA_STATES.map(s => `<option value="${escapeHtml(s)}" ${u.state === s ? "selected" : ""}>${escapeHtml(s)}</option>`).join("");
+
   const popup = document.createElement("div");
   popup.id = "pm-account-popup";
   popup.innerHTML = `
@@ -240,9 +257,11 @@ function openAccountDetailsForm(isFirstTime) {
       <p class="pm-dp-sub">${isFirstTime ? "We need this to deliver your orders." : "Update your saved delivery details."}</p>
       <input type="text" id="accName"    class="pm-dp-input" placeholder="Full Name *"   maxlength="60"  value="${escapeHtml(u.name || '')}"/>
       <input type="tel"  id="accPhone"   class="pm-dp-input" placeholder="Phone Number *" maxlength="15"  value="${escapeHtml(u.phone || '')}"/>
-      <input type="text" id="accState"   class="pm-dp-input" placeholder="State *"        maxlength="60"  value="${escapeHtml(u.state || '')}"/>
+      <input type="tel"  id="accPincode" class="pm-dp-input" placeholder="Pincode *"      maxlength="6"   value="${escapeHtml(u.pincode || '')}"/>
+      <div id="accPincodeStatus" class="pm-dp-pincode-status"></div>
+      <select id="accState" class="pm-dp-input pm-dp-select">${stateOptionsHtml}</select>
       <input type="text" id="accCity"    class="pm-dp-input" placeholder="City *"         maxlength="60"  value="${escapeHtml(u.city || '')}"/>
-      <input type="text" id="accPincode" class="pm-dp-input" placeholder="Pincode *"       maxlength="10" value="${escapeHtml(u.pincode || '')}"/>
+      <div id="accPincodeSuggest" class="pm-dp-pincode-suggest"></div>
       <textarea id="accAddress" class="pm-dp-input pm-dp-textarea" rows="2" placeholder="Full Address *" maxlength="200">${escapeHtml(u.address || '')}</textarea>
       <div class="pm-dp-btns">
         ${isFirstTime ? "" : `<button class="pm-dp-cancel" id="accCancel">Cancel</button>`}
@@ -261,6 +280,95 @@ function openAccountDetailsForm(isFirstTime) {
   }
   popup.querySelector("#accCancel")?.addEventListener("click", closeAcc);
 
+  /* ── Pincode → State + City auto-fill ──
+     Fires once the pincode field has exactly 6 digits. Uses India Post's
+     free public API. On a valid pincode, State and City are filled in
+     (overwriting whatever was there) since the pincode is the most
+     precise signal of the three. */
+  const pincodeInput  = popup.querySelector("#accPincode");
+  const pincodeStatus = popup.querySelector("#accPincodeStatus");
+  const stateSelect   = popup.querySelector("#accState");
+  const cityInput     = popup.querySelector("#accCity");
+  const suggestBox    = popup.querySelector("#accPincodeSuggest");
+
+  pincodeInput.addEventListener("input", () => {
+    pincodeInput.value = pincodeInput.value.replace(/[^0-9]/g, "").slice(0, 6);
+    suggestBox.innerHTML = ""; // typing a pincode directly overrides any earlier suggestion list
+    if (pincodeInput.value.length === 6) lookupPincode(pincodeInput.value);
+    else pincodeStatus.textContent = "";
+  });
+
+  async function lookupPincode(pincode) {
+    pincodeStatus.textContent = "Looking up...";
+    pincodeStatus.className = "pm-dp-pincode-status";
+    try {
+      const res  = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+      const data = await res.json();
+      const result = Array.isArray(data) ? data[0] : null;
+      if (!result || result.Status !== "Success" || !Array.isArray(result.PostOffice) || !result.PostOffice.length) {
+        pincodeStatus.textContent = "Pincode not found — please enter State/City manually.";
+        pincodeStatus.className = "pm-dp-pincode-status err";
+        return;
+      }
+      const po = result.PostOffice[0];
+      if (po.State && INDIA_STATES.includes(po.State)) {
+        stateSelect.value = po.State;
+      }
+      cityInput.value = po.District || po.Block || po.Name || cityInput.value;
+      pincodeStatus.textContent = `✓ ${po.District || ''}${po.State ? ', ' + po.State : ''}`;
+      pincodeStatus.className = "pm-dp-pincode-status ok";
+    } catch {
+      pincodeStatus.textContent = "Could not verify pincode (network error) — you can still enter details manually.";
+      pincodeStatus.className = "pm-dp-pincode-status err";
+    }
+  }
+
+  /* ── State/City → Pincode suggestions ──
+     Not a full auto-fill (a city can span many pincodes), so this offers
+     a tappable list of matching pincodes instead of guessing one. Fires
+     when the user picks a State and has typed a City. */
+  async function suggestPincodes() {
+    const state = stateSelect.value;
+    const city  = cityInput.value.trim();
+    if (!state || city.length < 3) { suggestBox.innerHTML = ""; return; }
+    // Don't overwrite a pincode the user already filled in directly.
+    if (pincodeInput.value.length === 6) return;
+
+    suggestBox.innerHTML = `<span class="pm-dp-suggest-label">Looking up pincodes for ${escapeHtml(city)}...</span>`;
+    try {
+      const res  = await fetch(`https://api.postalpincode.in/postoffice/${encodeURIComponent(city)}`);
+      const data = await res.json();
+      const result = Array.isArray(data) ? data[0] : null;
+      if (!result || result.Status !== "Success" || !Array.isArray(result.PostOffice) || !result.PostOffice.length) {
+        suggestBox.innerHTML = "";
+        return;
+      }
+      // Only offer post offices in the matching state, dedupe by pincode.
+      const seen = new Set();
+      const matches = result.PostOffice.filter(po => po.State === state && po.Pincode && !seen.has(po.Pincode) && seen.add(po.Pincode)).slice(0, 8);
+      if (!matches.length) { suggestBox.innerHTML = ""; return; }
+
+      suggestBox.innerHTML = `<span class="pm-dp-suggest-label">Select your pincode:</span>` +
+        `<div class="pm-dp-suggest-chips">${matches.map(po =>
+          `<button type="button" class="pm-dp-suggest-chip" data-pin="${escapeHtml(po.Pincode)}">${escapeHtml(po.Pincode)} — ${escapeHtml(po.Name)}</button>`
+        ).join("")}</div>`;
+
+      suggestBox.querySelectorAll(".pm-dp-suggest-chip").forEach(btn => {
+        btn.addEventListener("click", () => {
+          pincodeInput.value = btn.dataset.pin;
+          pincodeStatus.textContent = `✓ Pincode set to ${btn.dataset.pin}`;
+          pincodeStatus.className = "pm-dp-pincode-status ok";
+          suggestBox.innerHTML = "";
+        });
+      });
+    } catch {
+      suggestBox.innerHTML = "";
+    }
+  }
+
+  stateSelect.addEventListener("change", suggestPincodes);
+  cityInput.addEventListener("blur", suggestPincodes);
+
   popup.querySelector("#accSave").addEventListener("click", async () => {
     const name    = document.getElementById("accName").value.trim();
     const phone   = document.getElementById("accPhone").value.trim();
@@ -271,6 +379,10 @@ function openAccountDetailsForm(isFirstTime) {
 
     if (!name || !phone || !state || !city || !pincode || !address) {
       showToast("Please fill in all fields.");
+      return;
+    }
+    if (pincode.length !== 6) {
+      showToast("Please enter a valid 6-digit pincode.");
       return;
     }
 
@@ -339,7 +451,9 @@ async function openMyOrders() {
     list.innerHTML = orders.map(o => `
       <div class="my-order-card">
         <div class="mo-date">${new Date(o.createdAt).toLocaleDateString()}</div>
-        <div class="mo-items">${(o.items || []).map(i => `${escapeHtml(i.product)} x${i.qty}`).join(", ")}</div>
+        <div class="mo-items">
+          ${(o.items || []).map(i => `<div class="mo-item-line">${escapeHtml(i.product)}${orderItemOptionsHtml(i)} x${i.qty}</div>`).join("")}
+        </div>
         <div class="mo-total">Total: Rs.${o.total}</div>
       </div>
     `).join("");
