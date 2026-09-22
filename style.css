@@ -746,6 +746,7 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
   /* Hide desktop links, show hamburger */
   .nav-links   { display: none; }
   .hamburger   { display: flex; }
+  #navAuthSlot { display: none; }
 
   #hero { grid-template-columns: 1fr; padding: 3rem 1.4rem; }
   .hero-right  { display: none; }
@@ -900,6 +901,60 @@ font-size: 0.72rem; color: rgba(255,255,255,0.22);
   transition: transform 0.2s, opacity 0.2s;
 }
 .pm-btn-ig:hover { transform: translateY(-2px); opacity: 0.9; }
+
+/* ============================================================
+   NAV AUTH — desktop-only login chip / user pfp dropdown
+   Hidden below the 900px hamburger breakpoint — mobile users only ever
+   see login/account via the hamburger drawer (see RESPONSIVE section).
+   ============================================================ */
+#navAuthSlot { flex-shrink: 0; display: flex; align-items: center; }
+
+/* Outline style (not solid orange like Order Now) so it reads as a
+   secondary action next to the primary CTA, instead of two competing
+   solid-orange buttons sitting side by side. */
+.nav-login-chip {
+  background: transparent; color: var(--accent);
+  border: 1.5px solid var(--accent); border-radius: 20px;
+  padding: 0.45rem 1.1rem; font-family: inherit;
+  font-size: 0.85rem; font-weight: 700;
+  cursor: pointer; transition: background 0.2s, color 0.2s;
+  flex-shrink: 0; white-space: nowrap;
+}
+.nav-login-chip:hover { background: var(--accent); color: #fff; }
+
+.nav-user-menu { position: relative; flex-shrink: 0; }
+.nav-user-pfp {
+  width: 36px; height: 36px; border-radius: 50%;
+  object-fit: cover; cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+.nav-user-pfp:hover { border-color: var(--accent); }
+
+.nav-user-dropdown {
+  position: absolute; top: calc(100% + 12px); right: 0;
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+  min-width: 180px; padding: 8px;
+  display: flex; flex-direction: column;
+  opacity: 0; visibility: hidden; transform: translateY(-8px);
+  transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+  z-index: 1050;
+}
+.nav-user-dropdown.open {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+.nud-name {
+  font-weight: 700; font-size: 0.88rem;
+  color: var(--ink); padding: 8px 10px 6px;
+  border-bottom: 1px solid #eee; margin-bottom: 4px;
+}
+.nav-user-dropdown a {
+  padding: 9px 10px; border-radius: 7px;
+  font-size: 0.85rem; color: #444;
+  text-decoration: none; transition: background 0.15s;
+}
+.nav-user-dropdown a:hover { background: #f5f5f5; color: var(--accent); }
 
 /* ============================================================
    CART ICON — NAVBAR
