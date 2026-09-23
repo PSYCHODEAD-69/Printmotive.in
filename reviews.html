@@ -536,7 +536,10 @@
               type: file.type.startsWith('video/') ? 'video' : 'image',
             });
           } catch (err) {
-            showToast(`"${file.name}" failed to upload. Continuing with the rest.`);
+            // Show the server's reason (e.g. "Only image ... files are allowed")
+            // when there is one, otherwise the generic message.
+            const why = err && err.message && err.message !== 'Upload failed' ? ` (${err.message})` : '';
+            showToast(`"${file.name}" failed to upload${why}. Continuing with the rest.`);
           }
         }
       }
@@ -586,7 +589,6 @@
         formData.append('folder', 'reviews');
 
         const xhr = new XMLHttpRequest();
-        const token = localStorage.getItem('pm_token') || '';
 
         xhr.upload.addEventListener('progress', e => {
           if (e.lengthComputable) {
@@ -608,7 +610,8 @@
         xhr.addEventListener('error', () => { prog.style.display = 'none'; reject(new Error('Network error')); });
 
         xhr.open('POST', `${API}/api/upload/review-media`);
-        // Public endpoint — no auth needed for review media
+        // Review media upload is login-only now — send the user's session token.
+        xhr.setRequestHeader('Authorization', `Bearer ${getUserToken() || ''}`);
         xhr.send(formData);
       });
     }
