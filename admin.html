@@ -429,6 +429,18 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 14px; padding: 1.3rem; margin-bottom: 1rem;
     }
+    /* Person block: Google pfp on the left; on its right the name (a bit
+       higher, bold) with the email under it in a smaller, muted size. */
+    .adm-person { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+    .adm-person-pfp { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: var(--card2, #1e1e1e); display: block; }
+    .adm-person-pfp-fallback { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--accent); color: #fff; font-weight: 700; font-size: .95rem; }
+    .adm-person-text { display: flex; flex-direction: column; justify-content: center; min-width: 0; line-height: 1.25; }
+    .adm-person-name { font-weight: 700; font-size: 1rem; color: var(--text, inherit); overflow-wrap: anywhere; }
+    .adm-person-email { font-size: .78rem; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+    .rac-person { margin: .35rem 0 .1rem; }
+    .oi-person { grid-column: 1 / -1; }
+    .oi-person > label { font-size: .75rem; color: var(--muted); display: block; margin-bottom: 6px; }
+    .ud-reviews-title { margin: 1.5rem 0 .75rem; }
     .rac-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
     .rac-meta { flex: 1; }
     .rac-stars { color: var(--yellow); font-size: 1.1rem; }
@@ -2729,7 +2741,7 @@ async function loadOrders() {
           <button class="btn-del" onclick="deleteOrder('${o.id}')">Delete</button>
         </div>
         <div class="order-info-grid">
-          <div class="oi-item"><label>Customer Name</label><span>${escHtml(o.name)}</span></div>
+          <div class="oi-item oi-person"><label>Customer</label>${personHtml(o.name, o.customerEmail, o.customerPfp)}</div>
           <div class="oi-item"><label>Phone</label><span>${escHtml(o.phone)}</span></div>
           <div class="oi-item" style="grid-column:1/-1"><label>Delivery Address</label><span>${escHtml(o.address)}</span></div>
         </div>
@@ -2885,6 +2897,10 @@ async function viewUserDetail(id) {
 
     const u = data.user;
     const orders = Array.isArray(data.orders) ? data.orders : [];
+    // Reviews this user posted. The account's own name/email/pfp are used
+    // (the review card needs them, and they're always current).
+    const reviews = (Array.isArray(data.reviews) ? data.reviews : [])
+      .map(r => ({ ...r, reviewerEmail: u.email, pfpUrl: u.pfpUrl || r.pfpUrl }));
 
     cont.innerHTML = `
       <div class="user-detail-header">
@@ -2919,6 +2935,11 @@ async function viewUserDetail(id) {
           <div class="order-total">Total: Rs.${o.total || '—'}</div>
         </div>
       `).join('') : '<div class="empty-state"><div class="es-icon">📦</div><p>No orders from this user yet.</p></div>'}
+
+      <h3 class="ud-reviews-title">Reviews (${reviews.length})</h3>
+      ${reviews.length
+        ? reviews.map(r => reviewCardHtml(r, false)).join('')
+        : '<div class="empty-state"><div class="es-icon">💬</div><p>This user hasn\'t posted any review yet.</p></div>'}
     `;
   } catch { cont.innerHTML = '<div class="empty-state"><p>Could not load user details.</p></div>'; }
 }
@@ -2928,7 +2949,10 @@ async function viewUserDetail(id) {
 ══════════════════════════════ */
 async function loadReviews() {
   try {
-    const reviews = await apiFetch('/api/reviews', 'GET', null, false);
+    // Admin-only endpoint: same data as the public list plus each reviewer's
+    // email and current Google photo. (Public /api/reviews never has email.)
+    const reviews = await apiFetch('/api/admin/reviews');
+    if (!Array.isArray(reviews)) { showAdmToast(reviews.error || 'Could not load reviews', 'error'); return; }
     document.getElementById('totalReviews').textContent = reviews.length;
     document.getElementById('nc-reviews').textContent   = reviews.length;
     const cont = document.getElementById('reviewsContainer');
@@ -2938,34 +2962,7 @@ async function loadReviews() {
       return;
     }
 
-    cont.innerHTML = reviews.map(r => {
-      const mediaList = Array.isArray(r.media) && r.media.length
-        ? r.media
-        : (r.mediaUrl ? [{ url: r.mediaUrl, type: r.mediaType || 'image' }] : []);
-      const mediaJson = JSON.stringify(mediaList.map(m => ({ url: m.url, type: m.type }))).replace(/'/g, "&#39;");
-
-      const mediaHtml = mediaList.length ? `<div class="rac-media ${mediaList.length === 1 ? 'rac-media-1' : ''}">
-        ${mediaList.map((m, idx) => m.type === 'video'
-          ? `<video src="${m.url}" muted onclick='openAdminLightbox(${mediaJson}, ${idx})'></video>`
-          : `<img src="${m.url}" onclick='openAdminLightbox(${mediaJson}, ${idx})'>`
-        ).join('')}
-      </div>` : '';
-
-      return `
-      <div class="review-admin-card">
-        <div class="rac-header">
-          <div class="rac-meta">
-            <div class="rac-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
-            <div class="rac-name">${escHtml(r.name)}</div>
-            <div class="rac-date">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
-            <div class="rac-text">"${escHtml(r.text)}"</div>
-            ${mediaHtml}
-          </div>
-          <button class="btn-del" onclick="deleteReview('${r.id}')">Delete</button>
-        </div>
-      </div>
-    `;
-    }).join('');
+    cont.innerHTML = reviews.map(r => reviewCardHtml(r, true)).join('');
   } catch { showAdmToast('Could not load reviews', 'error'); }
 }
 
@@ -3010,6 +3007,61 @@ function uploadFileXHR(url, file, folder, authToken, onProgress) {
 ══════════════════════════════ */
 function escHtml(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* Google pfp on the left, name (bold) with the email beneath it in a
+   smaller muted size on the right. If the person has no pfp (or it fails to
+   load — e.g. an order from an account that was deleted), a coloured circle
+   with their initials is shown instead, so the layout never breaks.
+   Email line is omitted when unknown. */
+function personHtml(name, email, pfpUrl) {
+  const nm = String(name || '').trim();
+  const initials = nm.split(/\s+/).filter(Boolean).map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+  const fallback = `<div class="adm-person-pfp-fallback">${escHtml(initials)}</div>`;
+  const pfp = pfpUrl
+    ? `<img class="adm-person-pfp" src="${escHtml(pfpUrl)}" alt="" referrerpolicy="no-referrer"
+            onerror="this.outerHTML='${fallback.replace(/'/g, "&#39;").replace(/"/g, '&quot;')}'"/>`
+    : fallback;
+  return `
+    <div class="adm-person">
+      ${pfp}
+      <div class="adm-person-text">
+        <div class="adm-person-name">${escHtml(nm || '—')}</div>
+        ${email ? `<div class="adm-person-email">${escHtml(email)}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+/* One review card — shared by the main Reviews section and by the
+   "Reviews" block inside a user's detail page. `withDelete` adds the
+   Delete button (main list only). Media URLs are escaped. */
+function reviewCardHtml(r, withDelete) {
+  const mediaList = Array.isArray(r.media) && r.media.length
+    ? r.media
+    : (r.mediaUrl ? [{ url: r.mediaUrl, type: r.mediaType || 'image' }] : []);
+  const mediaJson = escHtml(JSON.stringify(mediaList.map(m => ({ url: m.url, type: m.type }))));
+
+  const mediaHtml = mediaList.length ? `<div class="rac-media ${mediaList.length === 1 ? 'rac-media-1' : ''}">
+    ${mediaList.map((m, idx) => m.type === 'video'
+      ? `<video src="${escHtml(m.url)}" muted onclick="openAdminLightbox(JSON.parse(this.dataset.media), ${idx})" data-media="${mediaJson}"></video>`
+      : `<img src="${escHtml(m.url)}" onclick="openAdminLightbox(JSON.parse(this.dataset.media), ${idx})" data-media="${mediaJson}">`
+    ).join('')}
+  </div>` : '';
+
+  const rating = Math.min(Math.max(parseInt(r.rating) || 0, 0), 5);
+  return `
+  <div class="review-admin-card">
+    <div class="rac-header">
+      <div class="rac-meta">
+        <div class="rac-stars">${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}</div>
+        <div class="rac-person">${personHtml(r.name, r.reviewerEmail, r.pfpUrl)}</div>
+        <div class="rac-date">${new Date(r.createdAt).toLocaleString('en-IN')}</div>
+        <div class="rac-text">"${escHtml(r.text)}"</div>
+        ${mediaHtml}
+      </div>
+      ${withDelete ? `<button class="btn-del" onclick="deleteReview('${escHtml(r.id)}')">Delete</button>` : ''}
+    </div>
+  </div>`;
 }
 
 /* Builds the "(Color: X | Size: Y | Print Side: Z)" suffix for one order
