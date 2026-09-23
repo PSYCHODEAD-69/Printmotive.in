@@ -35,10 +35,15 @@ async function loadProducts() {
     updateCategoryBadges(allProducts);
   } catch (err) {
     console.error("Failed to load products:", err);
-    document.getElementById("productsGrid").innerHTML = "";
-    document.getElementById("noProducts").style.display = "block";
-    document.getElementById("noProducts").innerHTML =
-      `<p style="font-size:1.1rem;">Could not load products. Please refresh.</p>`;
+    // These elements only exist on index.html — other pages that include
+    // script.js (e.g. privacy-policy.html) must not crash here.
+    const grid    = document.getElementById("productsGrid");
+    const noProds = document.getElementById("noProducts");
+    if (grid) grid.innerHTML = "";
+    if (noProds) {
+      noProds.style.display = "block";
+      noProds.innerHTML = `<p style="font-size:1.1rem;">Could not load products. Please refresh.</p>`;
+    }
   }
 }
 
@@ -1590,10 +1595,13 @@ function showDeliveryPopup(type, waLink, emailLink, product, price, isCart, size
    ══════════════════════════════════════ */
 async function saveOrderToAPI(orderData) {
   try {
-    await fetch(`${PM_API}/api/orders`, {
+    // /api/orders needs the logged-in user's token (userFetch adds it).
+    // userId is deliberately NOT sent — the server reads it from the token.
+    const { userId, ...body } = orderData;
+    await userFetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(orderData)
+      body: JSON.stringify(body)
     });
   } catch { /* silently fail — WhatsApp/email still opened */ }
 }
